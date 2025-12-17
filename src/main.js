@@ -1,4 +1,5 @@
 import { createApp } from 'vue'
+import { createPinia } from 'pinia'
 import './style.css'
 import App from './App.vue'
 import TDesign from 'tdesign-vue-next'
@@ -8,6 +9,9 @@ import '@arco-design/web-vue/dist/arco.css'
 import router from './router'
 
 const app = createApp(App)
+const pinia = createPinia()
+
+app.use(pinia)
 app.use(TDesign)
 app.use(ArcoVue)
 app.use(router)
