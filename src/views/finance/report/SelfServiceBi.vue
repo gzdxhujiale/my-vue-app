@@ -145,7 +145,7 @@
       }
       
       state.filters[fieldKey] = {
-        selected: new Set(uniqueValues), // 默认全选
+        selected: [...uniqueValues], // 使用数组替代Set，默认全选
         options: uniqueValues.sort(),
         fieldType: 'dim',
         dateAgg: field?.dateAgg // 记录日期聚合类型
@@ -180,10 +180,11 @@
   const toggleOption = (fieldKey, option) => {
     if (state.filters[fieldKey] && state.filters[fieldKey].fieldType === 'dim') {
       const filter = state.filters[fieldKey]
-      if (filter.selected.has(option)) {
-        filter.selected.delete(option)
+      const index = filter.selected.indexOf(option)
+      if (index > -1) {
+        filter.selected.splice(index, 1) // 移除
       } else {
-        filter.selected.add(option)
+        filter.selected.push(option) // 添加
       }
       renderViz()
     }
@@ -191,7 +192,7 @@
   
   const updateFilterSelection = (fieldKey, selectedValues) => {
     if (state.filters[fieldKey] && state.filters[fieldKey].fieldType === 'dim') {
-      state.filters[fieldKey].selected = new Set(selectedValues)
+      state.filters[fieldKey].selected = [...selectedValues]
       renderViz()
     }
   }
@@ -214,13 +215,14 @@
     // 只对维度字段执行全选/取消全选操作
     if (filter.fieldType !== 'dim') return
     
-    const allSelected = filter.selected.size === filter.options.length
+    const allSelected = filter.selected.length === filter.options.length
     
     if (allSelected) {
-      filter.selected = new Set() // 全部取消选择
+      filter.selected.splice(0) // 清空数组（全部取消选择）
     } else {
-      filter.selected = new Set(filter.options) // 全部选择
+      filter.selected.splice(0, filter.selected.length, ...filter.options) // 全部选择
     }
+    
     renderViz()
   }
   
@@ -310,7 +312,7 @@
           }
         } else {
           // 维度筛选逻辑
-          if (!filter.selected || filter.selected.size === 0) continue
+          if (!filter.selected || filter.selected.length === 0) continue
           
           let valueToCheck = row[key]
           
@@ -319,7 +321,7 @@
             valueToCheck = aggregateDate(row[key], filter.dateAgg)
           }
           
-          if (!filter.selected.has(valueToCheck)) {
+          if (!filter.selected.includes(valueToCheck)) {
             return false
           }
         }
@@ -479,7 +481,7 @@
           field: m.key, 
           type: 'numericColumn',
           valueFormatter: p => p.value ? Math.round(p.value).toLocaleString() : '',
-          minWidth: 66 // 减少1/3，从100减少到66
+          minWidth: 44 // 再次减少1/3，从66减少到44
         }))
       ]
       const rowData = keys.map(k => {
@@ -539,7 +541,7 @@
           field: `${cv}_${metrics[0].key}`,
           type: 'numericColumn',
           valueFormatter: p => p.value ? Math.round(p.value).toLocaleString() : '',
-          minWidth: 66 // 减少1/3
+          minWidth: 44 // 再次减少1/3，从66减少到44
         })
       } else {
         columnDefs.push({
@@ -549,7 +551,7 @@
             field: `${cv}_${m.key}`,
             type: 'numericColumn',
             valueFormatter: p => p.value ? Math.round(p.value).toLocaleString() : '',
-            minWidth: 66 // 减少1/3
+            minWidth: 44 // 再次减少1/3，从66减少到44
           }))
         })
       }
@@ -793,7 +795,7 @@
                       <span class="filter-title">{{ fieldKey }}</span>
                       <div class="filter-status">
                         <span class="selected-count">
-                          {{ state.filters[fieldKey]?.selected?.size || 0 }}/{{ state.filters[fieldKey]?.options?.length || 0 }}
+                          {{ state.filters[fieldKey]?.selected?.length || 0 }}/{{ state.filters[fieldKey]?.options?.length || 0 }}
                         </span>
                         <IconCaretDown 
                           class="caret-icon" 
@@ -815,8 +817,8 @@
                         <!-- 全选选项 -->
                         <div class="dropdown-item select-all-item" @click.stop="toggleSelectAll(fieldKey)">
                           <a-checkbox 
-                            :checked="state.filters[fieldKey]?.selected?.size === state.filters[fieldKey]?.options?.length"
-                            :indeterminate="state.filters[fieldKey]?.selected?.size > 0 && state.filters[fieldKey]?.selected?.size < state.filters[fieldKey]?.options?.length"
+                            :checked="state.filters[fieldKey]?.selected?.length === state.filters[fieldKey]?.options?.length"
+                            :indeterminate="state.filters[fieldKey]?.selected?.length > 0 && state.filters[fieldKey]?.selected?.length < state.filters[fieldKey]?.options?.length"
                             @click.stop
                           >
                             全选
@@ -834,7 +836,7 @@
                             @click.stop="toggleOption(fieldKey, option)"
                           >
                             <a-checkbox 
-                              :checked="state.filters[fieldKey]?.selected?.has(option)"
+                              :checked="state.filters[fieldKey]?.selected?.includes(option)"
                               @click.stop
                             >
                               {{ option }}
