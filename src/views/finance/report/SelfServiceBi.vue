@@ -79,6 +79,7 @@
   
   // 自动筛选器相关
   const activeFilters = ref(new Set()) // 当前激活的筛选器字段
+  const expandedFilters = ref(new Set()) // 当前展开的筛选器
   
   // 拖拽相关
   const draggedField = ref(null)
@@ -108,15 +109,47 @@
   }
   
   // --- 筛选器管理函数 ---
-  const initFilter = (fieldKey) => {
+  const initFilter = (fieldKey, field = null) => {
     if (state.filters[fieldKey]) return
     
-    // 从原始数据获取该字段的所有唯一值
-    const uniqueValues = [...new Set(rawData.map(row => row[fieldKey]))].filter(v => v !== null && v !== undefined)
+    const fieldType = field ? field.fieldType : 'dim'
     
-    state.filters[fieldKey] = {
-      selected: new Set(uniqueValues), // 默认全选
-      options: uniqueValues.sort()
+    if (fieldType === 'measure') {
+      // 度量字段：创建数值范围筛选
+      const values = rawData.map(row => row[fieldKey]).filter(v => v !== null && v !== undefined && !isNaN(v))
+      const min = Math.min(...values)
+      const max = Math.max(...values)
+      
+      state.filters[fieldKey] = {
+        fieldType: 'measure',
+        operator: 'all', // 'all', 'gt', 'lt', 'between', 'eq'
+        value: null,
+        minValue: null,
+        maxValue: null,
+        rangeMin: min,
+        rangeMax: max
+      }
+    } else {
+      // 维度字段：创建多选筛选
+      let uniqueValues = []
+      
+      // 特殊处理：如果是日期字段且有聚合，使用聚合后的值
+      if (field && field.key === '日期' && field.dateAgg) {
+        uniqueValues = [...new Set(rawData.map(row => {
+          const dateStr = row[fieldKey]
+          return aggregateDate(dateStr, field.dateAgg)
+        }))].filter(v => v !== null && v !== undefined)
+      } else {
+        // 普通字段：从原始数据获取该字段的所有唯一值
+        uniqueValues = [...new Set(rawData.map(row => row[fieldKey]))].filter(v => v !== null && v !== undefined)
+      }
+      
+      state.filters[fieldKey] = {
+        selected: new Set(uniqueValues), // 默认全选
+        options: uniqueValues.sort(),
+        fieldType: 'dim',
+        dateAgg: field?.dateAgg // 记录日期聚合类型
+      }
     }
     
     activeFilters.value.add(fieldKey)
@@ -125,11 +158,30 @@
   const removeFilter = (fieldKey) => {
     delete state.filters[fieldKey]
     activeFilters.value.delete(fieldKey)
+    expandedFilters.value.delete(fieldKey) // 同时移除展开状态
+  }
+  
+  const toggleFilterExpansion = (fieldKey) => {
+    if (expandedFilters.value.has(fieldKey)) {
+      expandedFilters.value.delete(fieldKey)
+    } else {
+      expandedFilters.value.add(fieldKey)
+    }
   }
   
   const updateFilterSelection = (fieldKey, selectedValues) => {
     if (state.filters[fieldKey]) {
       state.filters[fieldKey].selected = new Set(selectedValues)
+      renderViz()
+    }
+  }
+  
+  const updateMeasureFilter = (fieldKey, operator, value, minValue, maxValue) => {
+    if (state.filters[fieldKey] && state.filters[fieldKey].fieldType === 'measure') {
+      state.filters[fieldKey].operator = operator
+      state.filters[fieldKey].value = value
+      state.filters[fieldKey].minValue = minValue
+      state.filters[fieldKey].maxValue = maxValue
       renderViz()
     }
   }
@@ -205,11 +257,48 @@
   
     // 1. 筛选 (Filtering)
     let filteredData = data.filter(row => {
-      // 这里简单实现筛选逻辑，实际可扩展
+      // 遍历所有筛选器
       for (const [key, filter] of Object.entries(state.filters)) {
-         if (filter.selected && filter.selected.size > 0 && !filter.selected.has(row[key])) {
-           return false
-         }
+        
+        if (filter.fieldType === 'measure') {
+          // 度量筛选逻辑
+          const value = parseFloat(row[key])
+          if (isNaN(value)) continue
+          
+          switch (filter.operator) {
+            case 'gt':
+              if (filter.value !== null && value <= filter.value) return false
+              break
+            case 'lt':
+              if (filter.value !== null && value >= filter.value) return false
+              break
+            case 'eq':
+              if (filter.value !== null && value !== filter.value) return false
+              break
+            case 'between':
+              if (filter.minValue !== null && value < filter.minValue) return false
+              if (filter.maxValue !== null && value > filter.maxValue) return false
+              break
+            case 'all':
+            default:
+              // 不筛选
+              break
+          }
+        } else {
+          // 维度筛选逻辑
+          if (!filter.selected || filter.selected.size === 0) continue
+          
+          let valueToCheck = row[key]
+          
+          // 特殊处理：如果是日期字段且有聚合设置，需要对比聚合后的值
+          if (filter.dateAgg && key === '日期') {
+            valueToCheck = aggregateDate(row[key], filter.dateAgg)
+          }
+          
+          if (!filter.selected.has(valueToCheck)) {
+            return false
+          }
+        }
       }
       return true
     })
@@ -366,7 +455,7 @@
           field: m.key, 
           type: 'numericColumn',
           valueFormatter: p => p.value ? Math.round(p.value).toLocaleString() : '',
-          minWidth: 100
+          minWidth: 66 // 减少1/3，从100减少到66
         }))
       ]
       const rowData = keys.map(k => {
@@ -425,7 +514,8 @@
           headerName: cv, 
           field: `${cv}_${metrics[0].key}`,
           type: 'numericColumn',
-          valueFormatter: p => p.value ? Math.round(p.value).toLocaleString() : ''
+          valueFormatter: p => p.value ? Math.round(p.value).toLocaleString() : '',
+          minWidth: 66 // 减少1/3
         })
       } else {
         columnDefs.push({
@@ -434,7 +524,8 @@
             headerName: m.key,
             field: `${cv}_${m.key}`,
             type: 'numericColumn',
-            valueFormatter: p => p.value ? Math.round(p.value).toLocaleString() : ''
+            valueFormatter: p => p.value ? Math.round(p.value).toLocaleString() : '',
+            minWidth: 66 // 减少1/3
           }))
         })
       }
@@ -515,10 +606,8 @@
     if (targetShelf === 'cols') state.cols.push(field)
     if (targetShelf === 'rows') state.rows.push(field)
     
-    // 如果是维度，自动创建筛选器
-    if (field.fieldType === 'dim') {
-      initFilter(field.key)
-    }
+    // 自动创建筛选器（维度和度量都支持）
+    initFilter(field.key, field) // 传递field对象
     
     draggedField.value = null
     renderViz()
@@ -567,10 +656,11 @@
     state.cols = defaultCols
     state.rows = defaultRows
     
-    // 为维度字段初始化筛选器
-    initFilter('日期')
-    initFilter('客户')  
-    initFilter('平台')
+    // 为字段初始化筛选器，传递field对象以正确处理聚合
+    initFilter('日期', defaultCols[0]) // 传递日期field对象，包含dateAgg
+    initFilter('客户', defaultRows[0])  
+    initFilter('平台', defaultRows[1])
+    initFilter('GMV', defaultRows[2]) // 为GMV度量添加筛选器
     
     // 渲染初始视图
     renderViz()
@@ -667,42 +757,117 @@
                 v-for="fieldKey in Array.from(activeFilters)" 
                 :key="fieldKey"
                 class="filter-item"
+                :class="{ 'expanded': expandedFilters.has(fieldKey) }"
               >
-                <div class="filter-header">
+                <div class="filter-header" @click="toggleFilterExpansion(fieldKey)">
                   <span class="filter-title">{{ fieldKey }}</span>
-                  <a-button size="mini" type="text" @click="removeFilter(fieldKey)">
-                    <template #icon><IconClose style="font-size: 10px" /></template>
-                  </a-button>
+                  <div class="filter-header-actions">
+                    <span class="selected-count" v-if="!expandedFilters.has(fieldKey)">
+                      {{ state.filters[fieldKey]?.selected.size || 0 }}/{{ state.filters[fieldKey]?.options.length || 0 }}
+                    </span>
+                    <IconCaretDown 
+                      class="expand-icon" 
+                      :class="{ 'rotated': expandedFilters.has(fieldKey) }"
+                    />
+                    <a-button 
+                      size="mini" 
+                      type="text" 
+                      @click.stop="removeFilter(fieldKey)"
+                      class="remove-btn"
+                    >
+                      <template #icon><IconClose style="font-size: 10px" /></template>
+                    </a-button>
+                  </div>
                 </div>
                 
-                <div class="filter-controls">
-                  <a-button 
-                    size="mini" 
-                    type="text" 
-                    @click="toggleSelectAll(fieldKey)"
-                    class="select-all-btn"
-                  >
-                    {{ state.filters[fieldKey]?.selected.size === state.filters[fieldKey]?.options.length ? '取消全选' : '全选' }}
-                  </a-button>
+                <div class="filter-content" v-show="expandedFilters.has(fieldKey)">
+                  <!-- 维度筛选 -->
+                  <template v-if="state.filters[fieldKey]?.fieldType === 'dim'">
+                    <div class="filter-controls">
+                      <a-button 
+                        size="mini" 
+                        type="text" 
+                        @click="toggleSelectAll(fieldKey)"
+                        class="select-all-btn"
+                      >
+                        {{ state.filters[fieldKey]?.selected.size === state.filters[fieldKey]?.options.length ? '取消全选' : '全选' }}
+                      </a-button>
+                    </div>
+                    
+                    <a-select
+                      :model-value="Array.from(state.filters[fieldKey]?.selected || [])"
+                      @update:model-value="(vals) => updateFilterSelection(fieldKey, vals)"
+                      multiple
+                      size="mini"
+                      :max-tag-count="2"
+                      placeholder="选择筛选值"
+                      style="width: 100%;"
+                    >
+                      <a-option 
+                        v-for="option in state.filters[fieldKey]?.options || []" 
+                        :key="option" 
+                        :value="option"
+                      >
+                        {{ option }}
+                      </a-option>
+                    </a-select>
+                  </template>
+                  
+                  <!-- 度量筛选 -->
+                  <template v-else-if="state.filters[fieldKey]?.fieldType === 'measure'">
+                    <div class="measure-filter">
+                      <div class="filter-operator">
+                        <a-select 
+                          :model-value="state.filters[fieldKey]?.operator || 'all'"
+                          @update:model-value="(op) => updateMeasureFilter(fieldKey, op, state.filters[fieldKey]?.value, state.filters[fieldKey]?.minValue, state.filters[fieldKey]?.maxValue)"
+                          size="mini"
+                          style="width: 100%; margin-bottom: 8px;"
+                        >
+                          <a-option value="all">不筛选</a-option>
+                          <a-option value="gt">大于</a-option>
+                          <a-option value="lt">小于</a-option>
+                          <a-option value="eq">等于</a-option>
+                          <a-option value="between">区间</a-option>
+                        </a-select>
+                      </div>
+                      
+                      <!-- 单值输入 -->
+                      <div v-if="['gt', 'lt', 'eq'].includes(state.filters[fieldKey]?.operator)" class="single-value">
+                        <a-input-number 
+                          :model-value="state.filters[fieldKey]?.value"
+                          @update:model-value="(val) => updateMeasureFilter(fieldKey, state.filters[fieldKey]?.operator, val, state.filters[fieldKey]?.minValue, state.filters[fieldKey]?.maxValue)"
+                          size="mini"
+                          style="width: 100%;"
+                          placeholder="输入数值"
+                        />
+                      </div>
+                      
+                      <!-- 区间输入 -->
+                      <div v-if="state.filters[fieldKey]?.operator === 'between'" class="range-values">
+                        <a-input-number 
+                          :model-value="state.filters[fieldKey]?.minValue"
+                          @update:model-value="(val) => updateMeasureFilter(fieldKey, 'between', state.filters[fieldKey]?.value, val, state.filters[fieldKey]?.maxValue)"
+                          size="mini"
+                          style="width: 48%; margin-bottom: 4px;"
+                          placeholder="最小值"
+                        />
+                        <span style="margin: 0 2%;">到</span>
+                        <a-input-number 
+                          :model-value="state.filters[fieldKey]?.maxValue"
+                          @update:model-value="(val) => updateMeasureFilter(fieldKey, 'between', state.filters[fieldKey]?.value, state.filters[fieldKey]?.minValue, val)"
+                          size="mini"
+                          style="width: 48%;"
+                          placeholder="最大值"
+                        />
+                      </div>
+                      
+                      <!-- 显示数据范围信息 -->
+                      <div class="range-info">
+                        范围: {{ Math.round(state.filters[fieldKey]?.rangeMin || 0).toLocaleString() }} ~ {{ Math.round(state.filters[fieldKey]?.rangeMax || 0).toLocaleString() }}
+                      </div>
+                    </div>
+                  </template>
                 </div>
-                
-                <a-select
-                  :model-value="Array.from(state.filters[fieldKey]?.selected || [])"
-                  @update:model-value="(vals) => updateFilterSelection(fieldKey, vals)"
-                  multiple
-                  size="mini"
-                  :max-tag-count="2"
-                  placeholder="选择筛选值"
-                  style="width: 100%;"
-                >
-                  <a-option 
-                    v-for="option in state.filters[fieldKey]?.options || []" 
-                    :key="option" 
-                    :value="option"
-                  >
-                    {{ option }}
-                  </a-option>
-                </a-select>
               </div>
             </div>
           </a-card>
@@ -939,34 +1104,114 @@
   }
   
   .filter-item {
-    margin-bottom: 12px;
-    padding: 8px;
+    margin-bottom: 8px;
     border: 1px solid var(--color-border-3);
-    border-radius: 4px;
+    border-radius: 6px;
     background: var(--color-fill-1);
+    overflow: hidden;
+    transition: all 0.2s ease;
+  }
+  
+  .filter-item:hover {
+    border-color: var(--color-border-2);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   }
   
   .filter-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 6px;
+    padding: 8px 12px;
+    cursor: pointer;
+    user-select: none;
+    border-bottom: 1px solid transparent;
+    transition: all 0.2s ease;
+  }
+  
+  .filter-item.expanded .filter-header {
+    border-bottom-color: var(--color-border-3);
+    background: var(--color-fill-2);
+  }
+  
+  .filter-header:hover {
+    background: var(--color-fill-2);
   }
   
   .filter-title {
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 600;
     color: var(--color-text-2);
   }
   
+  .filter-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  
+  .selected-count {
+    font-size: 10px;
+    color: var(--color-text-3);
+    background: var(--color-fill-3);
+    padding: 2px 6px;
+    border-radius: 10px;
+  }
+  
+  .expand-icon {
+    font-size: 12px;
+    color: var(--color-text-3);
+    transition: transform 0.2s ease;
+  }
+  
+  .expand-icon.rotated {
+    transform: rotate(180deg);
+  }
+  
+  .remove-btn {
+    opacity: 0.6;
+    transition: opacity 0.2s ease;
+  }
+  
+  .remove-btn:hover {
+    opacity: 1;
+  }
+  
+  .filter-content {
+    padding: 8px 12px;
+    border-top: 1px solid var(--color-border-3);
+    background: var(--color-bg-1);
+  }
+  
   .filter-controls {
-    margin-bottom: 6px;
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: flex-end;
   }
   
   .select-all-btn {
     font-size: 10px;
     padding: 2px 4px;
     height: auto;
+  }
+  
+  .measure-filter {
+    padding: 4px 0;
+  }
+  
+  .range-values {
+    display: flex;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+  
+  .range-info {
+    font-size: 10px;
+    color: var(--color-text-4);
+    margin-top: 4px;
+    text-align: center;
+    padding: 4px;
+    background: var(--color-fill-2);
+    border-radius: 3px;
   }
   
   /* 画板区域 */
