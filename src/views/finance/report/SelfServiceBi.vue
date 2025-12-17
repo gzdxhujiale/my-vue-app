@@ -169,6 +169,26 @@
     }
   }
   
+  const toggleFilterDropdown = (fieldKey, visible) => {
+    if (visible) {
+      expandedFilters.value.add(fieldKey)
+    } else {
+      expandedFilters.value.delete(fieldKey)
+    }
+  }
+  
+  const toggleOption = (fieldKey, option) => {
+    if (state.filters[fieldKey] && state.filters[fieldKey].fieldType === 'dim') {
+      const filter = state.filters[fieldKey]
+      if (filter.selected.has(option)) {
+        filter.selected.delete(option)
+      } else {
+        filter.selected.add(option)
+      }
+      renderViz()
+    }
+  }
+  
   const updateFilterSelection = (fieldKey, selectedValues) => {
     if (state.filters[fieldKey] && state.filters[fieldKey].fieldType === 'dim') {
       state.filters[fieldKey].selected = new Set(selectedValues)
@@ -761,122 +781,151 @@
                 v-for="fieldKey in Array.from(activeFilters)" 
                 :key="fieldKey"
                 class="filter-item"
-                :class="{ 'expanded': expandedFilters.has(fieldKey) }"
               >
-                <div class="filter-header" @click="toggleFilterExpansion(fieldKey)">
-                  <span class="filter-title">{{ fieldKey }}</span>
-                  <div class="filter-header-actions">
-                    <span class="selected-count" v-if="!expandedFilters.has(fieldKey)">
-                      <template v-if="state.filters[fieldKey]?.fieldType === 'dim'">
-                        {{ state.filters[fieldKey]?.selected?.size || 0 }}/{{ state.filters[fieldKey]?.options?.length || 0 }}
-                      </template>
-                      <template v-else>
-                        {{ state.filters[fieldKey]?.operator === 'all' ? '无筛选' : state.filters[fieldKey]?.operator }}
-                      </template>
-                    </span>
-                    <IconCaretDown 
-                      class="expand-icon" 
-                      :class="{ 'rotated': expandedFilters.has(fieldKey) }"
-                    />
-                    <a-button 
-                      size="mini" 
-                      type="text" 
-                      @click.stop="removeFilter(fieldKey)"
-                      class="remove-btn"
-                    >
-                      <template #icon><IconClose style="font-size: 10px" /></template>
-                    </a-button>
-                  </div>
-                </div>
-                
-                <div class="filter-content" v-show="expandedFilters.has(fieldKey)">
-                  <!-- 维度筛选 -->
-                  <template v-if="state.filters[fieldKey]?.fieldType === 'dim'">
-                    <div class="filter-controls">
+                <!-- 维度筛选器 -->
+                <template v-if="state.filters[fieldKey]?.fieldType === 'dim'">
+                  <a-dropdown 
+                    :trigger="['click']"
+                    :popup-visible="expandedFilters.has(fieldKey)"
+                    @popup-visible-change="(visible) => toggleFilterDropdown(fieldKey, visible)"
+                  >
+                    <div class="filter-trigger">
+                      <span class="filter-title">{{ fieldKey }}</span>
+                      <div class="filter-status">
+                        <span class="selected-count">
+                          {{ state.filters[fieldKey]?.selected?.size || 0 }}/{{ state.filters[fieldKey]?.options?.length || 0 }}
+                        </span>
+                        <IconCaretDown 
+                          class="caret-icon" 
+                          :class="{ 'rotated': expandedFilters.has(fieldKey) }"
+                        />
+                      </div>
                       <a-button 
                         size="mini" 
                         type="text" 
-                        @click="toggleSelectAll(fieldKey)"
-                        class="select-all-btn"
+                        @click.stop="removeFilter(fieldKey)"
+                        class="remove-btn"
                       >
-                        {{ state.filters[fieldKey]?.selected.size === state.filters[fieldKey]?.options.length ? '取消全选' : '全选' }}
+                        <template #icon><IconClose style="font-size: 10px" /></template>
                       </a-button>
                     </div>
                     
-                    <a-select
-                      :model-value="Array.from(state.filters[fieldKey]?.selected || [])"
-                      @update:model-value="(vals) => updateFilterSelection(fieldKey, vals)"
-                      multiple
-                      size="mini"
-                      :max-tag-count="2"
-                      placeholder="选择筛选值"
-                      style="width: 100%;"
-                    >
-                      <a-option 
-                        v-for="option in state.filters[fieldKey]?.options || []" 
-                        :key="option" 
-                        :value="option"
+                    <template #content>
+                      <div class="filter-dropdown">
+                        <!-- 全选选项 -->
+                        <div class="dropdown-item select-all-item" @click="toggleSelectAll(fieldKey)">
+                          <a-checkbox 
+                            :checked="state.filters[fieldKey]?.selected?.size === state.filters[fieldKey]?.options?.length"
+                            :indeterminate="state.filters[fieldKey]?.selected?.size > 0 && state.filters[fieldKey]?.selected?.size < state.filters[fieldKey]?.options?.length"
+                          >
+                            全选
+                          </a-checkbox>
+                        </div>
+                        
+                        <div class="dropdown-divider"></div>
+                        
+                        <!-- 具体选项 -->
+                        <div class="dropdown-options">
+                          <div 
+                            v-for="option in state.filters[fieldKey]?.options || []" 
+                            :key="option"
+                            class="dropdown-item option-item"
+                            @click="toggleOption(fieldKey, option)"
+                          >
+                            <a-checkbox :checked="state.filters[fieldKey]?.selected?.has(option)">
+                              {{ option }}
+                            </a-checkbox>
+                          </div>
+                        </div>
+                      </div>
+                    </template>
+                  </a-dropdown>
+                </template>
+                
+                <!-- 度量筛选器 -->
+                <template v-else-if="state.filters[fieldKey]?.fieldType === 'measure'">
+                  <a-dropdown 
+                    :trigger="['click']"
+                    :popup-visible="expandedFilters.has(fieldKey)"
+                    @popup-visible-change="(visible) => toggleFilterDropdown(fieldKey, visible)"
+                  >
+                    <div class="filter-trigger">
+                      <span class="filter-title">{{ fieldKey }}</span>
+                      <div class="filter-status">
+                        <span class="selected-count">
+                          {{ state.filters[fieldKey]?.operator === 'all' ? '无筛选' : state.filters[fieldKey]?.operator }}
+                        </span>
+                        <IconCaretDown 
+                          class="caret-icon" 
+                          :class="{ 'rotated': expandedFilters.has(fieldKey) }"
+                        />
+                      </div>
+                      <a-button 
+                        size="mini" 
+                        type="text" 
+                        @click.stop="removeFilter(fieldKey)"
+                        class="remove-btn"
                       >
-                        {{ option }}
-                      </a-option>
-                    </a-select>
-                  </template>
-                  
-                  <!-- 度量筛选 -->
-                  <template v-else-if="state.filters[fieldKey]?.fieldType === 'measure'">
-                    <div class="measure-filter">
-                      <div class="filter-operator">
-                        <a-select 
-                          :model-value="state.filters[fieldKey]?.operator || 'all'"
-                          @update:model-value="(op) => updateMeasureFilter(fieldKey, op, state.filters[fieldKey]?.value, state.filters[fieldKey]?.minValue, state.filters[fieldKey]?.maxValue)"
-                          size="mini"
-                          style="width: 100%; margin-bottom: 8px;"
-                        >
-                          <a-option value="all">不筛选</a-option>
-                          <a-option value="gt">大于</a-option>
-                          <a-option value="lt">小于</a-option>
-                          <a-option value="eq">等于</a-option>
-                          <a-option value="between">区间</a-option>
-                        </a-select>
-                      </div>
-                      
-                      <!-- 单值输入 -->
-                      <div v-if="['gt', 'lt', 'eq'].includes(state.filters[fieldKey]?.operator)" class="single-value">
-                        <a-input-number 
-                          :model-value="state.filters[fieldKey]?.value"
-                          @update:model-value="(val) => updateMeasureFilter(fieldKey, state.filters[fieldKey]?.operator, val, state.filters[fieldKey]?.minValue, state.filters[fieldKey]?.maxValue)"
-                          size="mini"
-                          style="width: 100%;"
-                          placeholder="输入数值"
-                        />
-                      </div>
-                      
-                      <!-- 区间输入 -->
-                      <div v-if="state.filters[fieldKey]?.operator === 'between'" class="range-values">
-                        <a-input-number 
-                          :model-value="state.filters[fieldKey]?.minValue"
-                          @update:model-value="(val) => updateMeasureFilter(fieldKey, 'between', state.filters[fieldKey]?.value, val, state.filters[fieldKey]?.maxValue)"
-                          size="mini"
-                          style="width: 48%; margin-bottom: 4px;"
-                          placeholder="最小值"
-                        />
-                        <span style="margin: 0 2%;">到</span>
-                        <a-input-number 
-                          :model-value="state.filters[fieldKey]?.maxValue"
-                          @update:model-value="(val) => updateMeasureFilter(fieldKey, 'between', state.filters[fieldKey]?.value, state.filters[fieldKey]?.minValue, val)"
-                          size="mini"
-                          style="width: 48%;"
-                          placeholder="最大值"
-                        />
-                      </div>
-                      
-                      <!-- 显示数据范围信息 -->
-                      <div class="range-info">
-                        范围: {{ Math.round(state.filters[fieldKey]?.rangeMin || 0).toLocaleString() }} ~ {{ Math.round(state.filters[fieldKey]?.rangeMax || 0).toLocaleString() }}
-                      </div>
+                        <template #icon><IconClose style="font-size: 10px" /></template>
+                      </a-button>
                     </div>
-                  </template>
-                </div>
+                    
+                    <template #content>
+                      <div class="filter-dropdown measure-dropdown">
+                        <div class="measure-filter-content">
+                          <div class="filter-operator">
+                            <a-select 
+                              :model-value="state.filters[fieldKey]?.operator || 'all'"
+                              @update:model-value="(op) => updateMeasureFilter(fieldKey, op, state.filters[fieldKey]?.value, state.filters[fieldKey]?.minValue, state.filters[fieldKey]?.maxValue)"
+                              size="small"
+                              style="width: 100%; margin-bottom: 12px;"
+                            >
+                              <a-option value="all">不筛选</a-option>
+                              <a-option value="gt">大于</a-option>
+                              <a-option value="lt">小于</a-option>
+                              <a-option value="eq">等于</a-option>
+                              <a-option value="between">区间</a-option>
+                            </a-select>
+                          </div>
+                          
+                          <!-- 单值输入 -->
+                          <div v-if="['gt', 'lt', 'eq'].includes(state.filters[fieldKey]?.operator)" class="single-value">
+                            <a-input-number 
+                              :model-value="state.filters[fieldKey]?.value"
+                              @update:model-value="(val) => updateMeasureFilter(fieldKey, state.filters[fieldKey]?.operator, val, state.filters[fieldKey]?.minValue, state.filters[fieldKey]?.maxValue)"
+                              size="small"
+                              style="width: 100%;"
+                              placeholder="输入数值"
+                            />
+                          </div>
+                          
+                          <!-- 区间输入 -->
+                          <div v-if="state.filters[fieldKey]?.operator === 'between'" class="range-values">
+                            <a-input-number 
+                              :model-value="state.filters[fieldKey]?.minValue"
+                              @update:model-value="(val) => updateMeasureFilter(fieldKey, 'between', state.filters[fieldKey]?.value, val, state.filters[fieldKey]?.maxValue)"
+                              size="small"
+                              style="width: 100%; margin-bottom: 8px;"
+                              placeholder="最小值"
+                            />
+                            <a-input-number 
+                              :model-value="state.filters[fieldKey]?.maxValue"
+                              @update:model-value="(val) => updateMeasureFilter(fieldKey, 'between', state.filters[fieldKey]?.value, state.filters[fieldKey]?.minValue, val)"
+                              size="small"
+                              style="width: 100%;"
+                              placeholder="最大值"
+                            />
+                          </div>
+                          
+                          <!-- 显示数据范围信息 -->
+                          <div class="range-info">
+                            数据范围: {{ Math.round(state.filters[fieldKey]?.rangeMin || 0).toLocaleString() }} ~ {{ Math.round(state.filters[fieldKey]?.rangeMax || 0).toLocaleString() }}
+                          </div>
+                        </div>
+                      </div>
+                    </template>
+                  </a-dropdown>
+                </template>
               </div>
             </div>
           </a-card>
@@ -1108,17 +1157,22 @@
   }
   
   .filters-container {
-    max-height: 300px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
     overflow-y: auto;
+    padding: 4px 0;
   }
   
   .filter-item {
-    margin-bottom: 8px;
+    flex-shrink: 0;
     border: 1px solid var(--color-border-3);
     border-radius: 6px;
     background: var(--color-fill-1);
-    overflow: hidden;
+    overflow: visible;
     transition: all 0.2s ease;
+    position: relative;
   }
   
   .filter-item:hover {
@@ -1126,101 +1180,134 @@
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   }
   
-  .filter-header {
+  .filter-trigger {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 8px 12px;
+    padding: 10px 12px;
     cursor: pointer;
     user-select: none;
-    border-bottom: 1px solid transparent;
     transition: all 0.2s ease;
+    min-height: 40px;
   }
   
-  .filter-item.expanded .filter-header {
-    border-bottom-color: var(--color-border-3);
-    background: var(--color-fill-2);
-  }
-  
-  .filter-header:hover {
+  .filter-trigger:hover {
     background: var(--color-fill-2);
   }
   
   .filter-title {
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 600;
     color: var(--color-text-2);
+    flex: 1;
   }
   
-  .filter-header-actions {
+  .filter-status {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
   }
   
   .selected-count {
-    font-size: 10px;
+    font-size: 11px;
     color: var(--color-text-3);
     background: var(--color-fill-3);
-    padding: 2px 6px;
-    border-radius: 10px;
+    padding: 3px 8px;
+    border-radius: 12px;
+    min-width: 50px;
+    text-align: center;
   }
   
-  .expand-icon {
+  .caret-icon {
     font-size: 12px;
     color: var(--color-text-3);
     transition: transform 0.2s ease;
   }
   
-  .expand-icon.rotated {
+  .caret-icon.rotated {
     transform: rotate(180deg);
   }
   
   .remove-btn {
     opacity: 0.6;
     transition: opacity 0.2s ease;
+    margin-left: 8px;
   }
   
   .remove-btn:hover {
     opacity: 1;
   }
   
-  .filter-content {
-    padding: 8px 12px;
-    border-top: 1px solid var(--color-border-3);
-    background: var(--color-bg-1);
+  .filter-dropdown {
+    min-width: 200px;
+    max-width: 280px;
+    max-height: 300px;
+    overflow-y: auto;
+    padding: 8px 0;
+    background: var(--color-bg-2);
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
   }
   
-  .filter-controls {
-    margin-bottom: 8px;
+  .dropdown-item {
+    padding: 8px 16px;
+    cursor: pointer;
+    transition: background 0.2s ease;
     display: flex;
-    justify-content: flex-end;
+    align-items: center;
+  }
+  
+  .dropdown-item:hover {
+    background: var(--color-fill-2);
+  }
+  
+  .select-all-item {
+    font-weight: 600;
+  }
+  
+  .dropdown-divider {
+    height: 1px;
+    background: var(--color-border-3);
+    margin: 4px 0;
+  }
+  
+  .dropdown-options {
+    max-height: 200px;
+    overflow-y: auto;
+  }
+  
+  .option-item {
+    font-size: 12px;
+  }
+  
+  .measure-dropdown {
+    min-width: 250px;
+  }
+  
+  .measure-filter-content {
+    padding: 12px;
+  }
+  
+  .range-values {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .range-info {
+    font-size: 10px;
+    color: var(--color-text-4);
+    margin-top: 8px;
+    padding: 6px 8px;
+    background: var(--color-fill-2);
+    border-radius: 4px;
+    text-align: center;
   }
   
   .select-all-btn {
     font-size: 10px;
     padding: 2px 4px;
     height: auto;
-  }
-  
-  .measure-filter {
-    padding: 4px 0;
-  }
-  
-  .range-values {
-    display: flex;
-    align-items: center;
-    margin-bottom: 6px;
-  }
-  
-  .range-info {
-    font-size: 10px;
-    color: var(--color-text-4);
-    margin-top: 4px;
-    text-align: center;
-    padding: 4px;
-    background: var(--color-fill-2);
-    border-radius: 3px;
   }
   
   /* 画板区域 */
