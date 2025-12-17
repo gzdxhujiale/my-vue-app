@@ -186,16 +186,6 @@
     }
   }
   
-  const updateMeasureFilter = (fieldKey, operator, value, minValue, maxValue) => {
-    if (state.filters[fieldKey] && state.filters[fieldKey].fieldType === 'measure') {
-      state.filters[fieldKey].operator = operator
-      state.filters[fieldKey].value = value
-      state.filters[fieldKey].minValue = minValue
-      state.filters[fieldKey].maxValue = maxValue
-      renderViz()
-    }
-  }
-  
   const toggleSelectAll = (fieldKey) => {
     if (!state.filters[fieldKey]) return
     
