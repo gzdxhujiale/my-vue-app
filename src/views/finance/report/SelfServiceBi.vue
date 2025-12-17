@@ -71,6 +71,7 @@
   // --- 状态管理（使用Pinia） ---
   import { useBiStore } from '../../../stores/biStore'
   import { storeToRefs } from 'pinia'
+  import { computed } from 'vue'
   const biStore = useBiStore()
   
   // 使用storeToRefs保持响应性
@@ -84,6 +85,15 @@
     updateFilterSelection, 
     updateMeasureFilter 
   } = biStore
+
+  // 安全的状态访问器，提供默认值
+  const safeState = computed(() => state.value || {
+    cols: [],
+    rows: [],
+    filters: {},
+    chartType: 'table',
+    colorPalette: 'default'
+  })
   
   // 拖拽相关
   const draggedField = ref(null)
@@ -140,8 +150,8 @@
   // --- 导出功能 ---
   const exportData = () => {
     // 准备维度和度量列表
-    const allDims = [...state.value.cols, ...state.value.rows].filter(f => f.fieldType === 'dim')
-    const metrics = [...state.value.cols, ...state.value.rows].filter(f => f.fieldType === 'measure')
+    const allDims = [...safeState.value.cols, ...safeState.value.rows].filter(f => f.fieldType === 'dim')
+    const metrics = [...safeState.value.cols, ...safeState.value.rows].filter(f => f.fieldType === 'measure')
     
     if (allDims.length === 0 && metrics.length === 0) {
       alert('请先配置维度和度量')
@@ -195,7 +205,7 @@
     // 1. 筛选 (Filtering)
     let filteredData = data.filter(row => {
       // 遍历所有筛选器
-      for (const [key, filter] of Object.entries(state.value.filters)) {
+      for (const [key, filter] of Object.entries(safeState.value.filters)) {
         
         if (filter.fieldType === 'measure') {
           // 度量筛选逻辑
@@ -365,8 +375,8 @@
     const { keys, groups } = aggregatedData
     
     // 区分：列维度 和 行维度
-    const colDims = state.value.cols.filter(f => f.fieldType === 'dim')
-    const rowDims = state.value.rows.filter(f => f.fieldType === 'dim')
+    const colDims = safeState.value.cols.filter(f => f.fieldType === 'dim')
+    const rowDims = safeState.value.rows.filter(f => f.fieldType === 'dim')
     
     // 创建容器
     const gridDiv = document.createElement('div')
@@ -492,10 +502,10 @@
     if (!vizContainer.value) return
     
     // 准备维度和度量列表
-    const allDims = [...state.value.cols, ...state.value.rows].filter(f => f.fieldType === 'dim')
-    const metrics = [...state.value.cols, ...state.value.rows].filter(f => f.fieldType === 'measure')
+    const allDims = [...safeState.value.cols, ...safeState.value.rows].filter(f => f.fieldType === 'dim')
+    const metrics = [...safeState.value.cols, ...safeState.value.rows].filter(f => f.fieldType === 'measure')
     
-    console.log('渲染函数调用:', { allDims, metrics, state: state.value.cols, rows: state.value.rows })
+    console.log('渲染函数调用:', { allDims, metrics, state: safeState.value.cols, rows: safeState.value.rows })
   
     // 空状态
     if (allDims.length === 0 && metrics.length === 0) {
@@ -516,13 +526,13 @@
 
     // 1. Arquero 聚合
     const aggregatedData = aggregateWithArquero(rawData, allDims, metrics)
-    console.log('准备渲染:', { aggregatedData, chartType: state.value.chartType })
+    console.log('准备渲染:', { aggregatedData, chartType: safeState.value.chartType })
 
     // 2. 路由渲染
-    if (state.value.chartType === 'table') {
+    if (safeState.value.chartType === 'table') {
       renderAgGrid(vizContainer.value, aggregatedData, allDims, metrics)
-    } else if (['bar', 'line', 'area'].includes(state.value.chartType)) {
-      renderEChart(vizContainer.value, aggregatedData, metrics, state.value.chartType)
+    } else if (['bar', 'line', 'area'].includes(safeState.value.chartType)) {
+      renderEChart(vizContainer.value, aggregatedData, metrics, safeState.value.chartType)
     }
   }
   
@@ -540,8 +550,8 @@
       dateAgg: draggedField.value.key === '日期' ? 'month' : undefined 
     } 
     
-    if (targetShelf === 'cols') state.value.cols.push(field)
-    if (targetShelf === 'rows') state.value.rows.push(field)
+    if (targetShelf === 'cols' && state.value) state.value.cols.push(field)
+    if (targetShelf === 'rows' && state.value) state.value.rows.push(field)
     
     // 自动创建筛选器（维度和度量都支持）
     initFilterWithRender(field.key, field) // 传递field对象
@@ -551,6 +561,8 @@
   }
   
   const removeField = (shelf, index) => {
+    if (!state.value) return
+    
     let removedField = null
     
     if (shelf === 'cols') {
@@ -590,8 +602,10 @@
       { key: 'GMV', fieldType: 'measure', uid: Date.now() + 4 }
     ]
     
-    state.value.cols = defaultCols
-    state.value.rows = defaultRows
+    if (state.value) {
+      state.value.cols = defaultCols
+      state.value.rows = defaultRows
+    }
     
     // 为字段初始化筛选器，传递field对象以正确处理聚合
     initFilterWithRender('日期', defaultCols[0]) // 传递日期field对象，包含dateAgg
@@ -626,7 +640,7 @@
           <a-button size="small" type="secondary" @click="renderViz">
             <template #icon><IconRefresh /></template> 刷新
           </a-button>
-          <a-button size="small" status="danger" @click="() => { state.value.cols=[]; state.value.rows=[]; activeFilters.value.clear(); state.value.filters={}; renderViz() }">
+          <a-button size="small" status="danger" @click="() => { if(state.value) { state.value.cols=[]; state.value.rows=[]; activeFilters.value.clear(); state.value.filters={}; renderViz() } }">
             <template #icon><IconClose /></template> 清空
           </a-button>
         </a-space>
@@ -706,7 +720,7 @@
                       <span class="filter-title">{{ fieldKey }}</span>
                       <div class="filter-status">
                         <span class="selected-count">
-                          {{ state.value.filters[fieldKey]?.selected?.length || 0 }}/{{ state.value.filters[fieldKey]?.options?.length || 0 }}
+                          {{ safeState.filters[fieldKey]?.selected?.length || 0 }}/{{ safeState.filters[fieldKey]?.options?.length || 0 }}
                         </span>
                         <IconCaretDown 
                           class="caret-icon" 
@@ -728,8 +742,8 @@
                         <!-- 全选选项 -->
                         <div class="dropdown-item select-all-item">
                           <a-checkbox 
-                            :checked="state.value.filters[fieldKey]?.selected?.length === state.value.filters[fieldKey]?.options?.length"
-                            :indeterminate="state.value.filters[fieldKey]?.selected?.length > 0 && state.value.filters[fieldKey]?.selected?.length < state.value.filters[fieldKey]?.options?.length"
+                            :checked="safeState.filters[fieldKey]?.selected?.length === safeState.filters[fieldKey]?.options?.length"
+                            :indeterminate="safeState.filters[fieldKey]?.selected?.length > 0 && safeState.filters[fieldKey]?.selected?.length < safeState.filters[fieldKey]?.options?.length"
                             @change="toggleSelectAllWithRender(fieldKey)"
                           >
                             全选
@@ -741,12 +755,12 @@
                         <!-- 具体选项 -->
                         <div class="dropdown-options">
                           <div 
-                            v-for="option in state.value.filters[fieldKey]?.options || []" 
+                            v-for="option in safeState.filters[fieldKey]?.options || []" 
                             :key="option"
                             class="dropdown-item option-item"
                           >
                             <a-checkbox 
-                              :checked="state.value.filters[fieldKey]?.selected?.includes(option)"
+                              :checked="safeState.filters[fieldKey]?.selected?.includes(option)"
                               @change="toggleOptionWithRender(fieldKey, option)"
                             >
                               {{ option }}
@@ -859,7 +873,7 @@
                 @drop="handleDrop('cols')"
               >
                 <div 
-                  v-for="(field, idx) in state.value.cols" 
+                  v-for="(field, idx) in safeState.cols" 
                   :key="field.uid"
                   class="field-pill-wrapper"
                 >
@@ -894,7 +908,7 @@
                 @drop="handleDrop('rows')"
               >
                  <div 
-                  v-for="(field, idx) in state.value.rows" 
+                  v-for="(field, idx) in safeState.rows" 
                   :key="field.uid"
                   class="field-pill-wrapper"
                 >
