@@ -726,11 +726,11 @@
                     <template #content>
                       <div class="filter-dropdown">
                         <!-- 全选选项 -->
-                        <div class="dropdown-item select-all-item" @click.stop="toggleSelectAllWithRender(fieldKey)">
+                        <div class="dropdown-item select-all-item">
                           <a-checkbox 
                             :checked="state.value.filters[fieldKey]?.selected?.length === state.value.filters[fieldKey]?.options?.length"
                             :indeterminate="state.value.filters[fieldKey]?.selected?.length > 0 && state.value.filters[fieldKey]?.selected?.length < state.value.filters[fieldKey]?.options?.length"
-                            @click.stop
+                            @change="toggleSelectAllWithRender(fieldKey)"
                           >
                             全选
                           </a-checkbox>
@@ -744,11 +744,10 @@
                             v-for="option in state.value.filters[fieldKey]?.options || []" 
                             :key="option"
                             class="dropdown-item option-item"
-                            @click.stop="toggleOptionWithRender(fieldKey, option)"
                           >
                             <a-checkbox 
                               :checked="state.value.filters[fieldKey]?.selected?.includes(option)"
-                              @click.stop
+                              @change="toggleOptionWithRender(fieldKey, option)"
                             >
                               {{ option }}
                             </a-checkbox>
