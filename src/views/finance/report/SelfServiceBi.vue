@@ -813,10 +813,11 @@
                     <template #content>
                       <div class="filter-dropdown">
                         <!-- 全选选项 -->
-                        <div class="dropdown-item select-all-item" @click="toggleSelectAll(fieldKey)">
+                        <div class="dropdown-item select-all-item" @click.stop="toggleSelectAll(fieldKey)">
                           <a-checkbox 
                             :checked="state.filters[fieldKey]?.selected?.size === state.filters[fieldKey]?.options?.length"
                             :indeterminate="state.filters[fieldKey]?.selected?.size > 0 && state.filters[fieldKey]?.selected?.size < state.filters[fieldKey]?.options?.length"
+                            @click.stop
                           >
                             全选
                           </a-checkbox>
@@ -830,9 +831,12 @@
                             v-for="option in state.filters[fieldKey]?.options || []" 
                             :key="option"
                             class="dropdown-item option-item"
-                            @click="toggleOption(fieldKey, option)"
+                            @click.stop="toggleOption(fieldKey, option)"
                           >
-                            <a-checkbox :checked="state.filters[fieldKey]?.selected?.has(option)">
+                            <a-checkbox 
+                              :checked="state.filters[fieldKey]?.selected?.has(option)"
+                              @click.stop
+                            >
                               {{ option }}
                             </a-checkbox>
                           </div>
@@ -1075,7 +1079,7 @@
   
   /* 侧边栏 */
   .sidebar {
-    width: 220px;
+    width: 165px; /* 减少1/4：从220px减少到165px */
     background: var(--color-bg-2);
     border-right: 1px solid var(--color-border-2);
     display: flex;
@@ -1116,7 +1120,7 @@
   
   /* 控制栏 */
   .controls-column {
-    width: 180px;
+    width: 235px; /* 增加55px：从180px增加到235px */
     background: var(--color-bg-1);
     border-right: 1px solid var(--color-border-2);
     padding: 8px;
@@ -1239,14 +1243,16 @@
   }
   
   .filter-dropdown {
-    min-width: 200px;
-    max-width: 280px;
+    min-width: 220px; /* 增加最小宽度以适应新的控制栏宽度 */
+    max-width: 300px;
     max-height: 300px;
-    overflow-y: auto;
+    overflow-x: hidden; /* 隐藏横向滚动条 */
+    overflow-y: auto; /* 只保留纵向滚动 */
     padding: 8px 0;
     background: var(--color-bg-2);
     border-radius: 6px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    word-break: break-all; /* 长文本自动换行 */
   }
   
   .dropdown-item {
@@ -1273,15 +1279,20 @@
   
   .dropdown-options {
     max-height: 200px;
-    overflow-y: auto;
+    overflow-x: hidden; /* 移除横向滚动 */
+    overflow-y: auto; /* 只保留纵向滚动 */
   }
   
   .option-item {
     font-size: 12px;
+    white-space: nowrap; /* 防止文本换行导致的布局问题 */
+    overflow: hidden;
+    text-overflow: ellipsis; /* 长文本用省略号显示 */
   }
   
   .measure-dropdown {
-    min-width: 250px;
+    min-width: 280px; /* 增加宽度以充分利用空间 */
+    max-width: 320px;
   }
   
   .measure-filter-content {
