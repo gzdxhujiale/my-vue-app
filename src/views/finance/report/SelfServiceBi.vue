@@ -170,7 +170,7 @@
   }
   
   const updateFilterSelection = (fieldKey, selectedValues) => {
-    if (state.filters[fieldKey]) {
+    if (state.filters[fieldKey] && state.filters[fieldKey].fieldType === 'dim') {
       state.filters[fieldKey].selected = new Set(selectedValues)
       renderViz()
     }
@@ -190,6 +190,10 @@
     if (!state.filters[fieldKey]) return
     
     const filter = state.filters[fieldKey]
+    
+    // 只对维度字段执行全选/取消全选操作
+    if (filter.fieldType !== 'dim') return
+    
     const allSelected = filter.selected.size === filter.options.length
     
     if (allSelected) {
