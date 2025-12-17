@@ -33,7 +33,25 @@
   
   const measures = [
     { key: 'GMV', type: 'number', icon: IconBarChart },
-    { key: '订单数', type: 'number', icon: IconOrderedList }
+    { key: '订单数', type: 'number', icon: IconOrderedList },
+    { key: '销售件数', type: 'number', icon: IconBarChart },
+    { key: '退款金额', type: 'number', icon: IconBarChart },
+    { key: '退款件数', type: 'number', icon: IconOrderedList },
+    { key: '支付用户数', type: 'number', icon: IconUser },
+    { key: '访客数', type: 'number', icon: IconUser },
+    { key: '浏览量', type: 'number', icon: IconBarChart },
+    { key: '加购次数', type: 'number', icon: IconOrderedList },
+    { key: '收藏次数', type: 'number', icon: IconOrderedList },
+    { key: '商品成本', type: 'number', icon: IconBarChart },
+    { key: '广告费', type: 'number', icon: IconBarChart },
+    { key: '平台费用', type: 'number', icon: IconBarChart },
+    { key: '运费', type: 'number', icon: IconBarChart },
+    { key: '其他费用', type: 'number', icon: IconBarChart },
+    { key: '毛利率', type: 'number', icon: IconBarChart },
+    { key: '净利率', type: 'number', icon: IconBarChart },
+    { key: '退货率', type: 'number', icon: IconBarChart },
+    { key: 'ROI', type: 'number', icon: IconBarChart },
+    { key: '客单价', type: 'number', icon: IconBarChart }
   ]
   
   const chartTypes = [
@@ -54,10 +72,13 @@
   const state = reactive({
     cols: [], // 列架 (Columns Shelf)
     rows: [], // 行架 (Rows Shelf)
-    filters: {}, // 筛选器
+    filters: {}, // 筛选器 - 格式: { fieldKey: { selected: Set, options: [] } }
     chartType: 'table', // 默认图表类型
     colorPalette: 'default'
   })
+  
+  // 自动筛选器相关
+  const activeFilters = ref(new Set()) // 当前激活的筛选器字段
   
   // 拖拽相关
   const draggedField = ref(null)
@@ -84,6 +105,92 @@
       case 'year': return `${y}`
       default: return dateStr
     }
+  }
+  
+  // --- 筛选器管理函数 ---
+  const initFilter = (fieldKey) => {
+    if (state.filters[fieldKey]) return
+    
+    // 从原始数据获取该字段的所有唯一值
+    const uniqueValues = [...new Set(rawData.map(row => row[fieldKey]))].filter(v => v !== null && v !== undefined)
+    
+    state.filters[fieldKey] = {
+      selected: new Set(uniqueValues), // 默认全选
+      options: uniqueValues.sort()
+    }
+    
+    activeFilters.value.add(fieldKey)
+  }
+  
+  const removeFilter = (fieldKey) => {
+    delete state.filters[fieldKey]
+    activeFilters.value.delete(fieldKey)
+  }
+  
+  const updateFilterSelection = (fieldKey, selectedValues) => {
+    if (state.filters[fieldKey]) {
+      state.filters[fieldKey].selected = new Set(selectedValues)
+      renderViz()
+    }
+  }
+  
+  const toggleSelectAll = (fieldKey) => {
+    if (!state.filters[fieldKey]) return
+    
+    const filter = state.filters[fieldKey]
+    const allSelected = filter.selected.size === filter.options.length
+    
+    if (allSelected) {
+      filter.selected = new Set() // 全部取消选择
+    } else {
+      filter.selected = new Set(filter.options) // 全部选择
+    }
+    renderViz()
+  }
+  
+  // --- 导出功能 ---
+  const exportData = () => {
+    // 准备维度和度量列表
+    const allDims = [...state.cols, ...state.rows].filter(f => f.fieldType === 'dim')
+    const metrics = [...state.cols, ...state.rows].filter(f => f.fieldType === 'measure')
+    
+    if (allDims.length === 0 && metrics.length === 0) {
+      alert('请先配置维度和度量')
+      return
+    }
+    
+    // 获取聚合后的数据
+    const aggregatedData = aggregateWithArquero(rawData, allDims, metrics)
+    const { keys, groups } = aggregatedData
+    
+    // 构造导出数据
+    const exportRows = []
+    
+    // 表头
+    const headers = [
+      ...allDims.map(d => d.key),
+      ...metrics.map(m => m.key)
+    ]
+    exportRows.push(headers.join(','))
+    
+    // 数据行
+    keys.forEach(k => {
+      const row = []
+      allDims.forEach(d => row.push(groups[k].meta[d.key] || ''))
+      metrics.forEach(m => row.push(groups[k].values[m.key] || 0))
+      exportRows.push(row.join(','))
+    })
+    
+    // 下载CSV
+    const csvContent = exportRows.join('\n')
+    const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' })
+    const link = document.createElement('a')
+    const url = URL.createObjectURL(blob)
+    link.setAttribute('href', url)
+    link.setAttribute('download', `自助分析数据_${new Date().toISOString().slice(0, 10)}.csv`)
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
   }
   
   // --- 核心聚合逻辑 (基于 Arquero) ---
@@ -246,12 +353,20 @@
     // 场景 A: 简单列表 (没有列维度) -> 直接展示
     if (colDims.length === 0) {
       const columnDefs = [
-        ...allDims.map(d => ({ headerName: d.key, field: d.key, pinned: 'left' })),
+        ...allDims.map(d => ({ 
+          headerName: d.key, 
+          field: d.key, 
+          pinned: 'left',
+          width: 80, // 4个中文字符宽度 (约20px/字符)
+          minWidth: 80,
+          maxWidth: 120
+        })),
         ...metrics.map(m => ({ 
           headerName: m.key, 
           field: m.key, 
           type: 'numericColumn',
-          valueFormatter: p => p.value ? Math.round(p.value).toLocaleString() : '' 
+          valueFormatter: p => p.value ? Math.round(p.value).toLocaleString() : '',
+          minWidth: 100
         }))
       ]
       const rowData = keys.map(k => {
@@ -295,7 +410,14 @@
     const sortedRowKeys = Object.keys(rowGroups).sort()
   
     // 构造 AG Grid Columns
-    const columnDefs = rowDims.map(d => ({ headerName: d.key, field: d.key, pinned: 'left' }))
+    const columnDefs = rowDims.map(d => ({ 
+      headerName: d.key, 
+      field: d.key, 
+      pinned: 'left',
+      width: 80, // 4个中文字符宽度
+      minWidth: 80,
+      maxWidth: 120
+    }))
     
     sortedColValues.forEach(cv => {
       if (metrics.length === 1) {
@@ -393,13 +515,35 @@
     if (targetShelf === 'cols') state.cols.push(field)
     if (targetShelf === 'rows') state.rows.push(field)
     
+    // 如果是维度，自动创建筛选器
+    if (field.fieldType === 'dim') {
+      initFilter(field.key)
+    }
+    
     draggedField.value = null
     renderViz()
   }
   
   const removeField = (shelf, index) => {
-    if (shelf === 'cols') state.cols.splice(index, 1)
-    if (shelf === 'rows') state.rows.splice(index, 1)
+    let removedField = null
+    
+    if (shelf === 'cols') {
+      removedField = state.cols[index]
+      state.cols.splice(index, 1)
+    }
+    if (shelf === 'rows') {
+      removedField = state.rows[index]
+      state.rows.splice(index, 1)
+    }
+    
+    // 检查该字段是否还在其他架子上，如果没有则移除筛选器
+    if (removedField && removedField.fieldType === 'dim') {
+      const stillInUse = [...state.cols, ...state.rows].some(f => f.key === removedField.key)
+      if (!stillInUse) {
+        removeFilter(removedField.key)
+      }
+    }
+    
     renderViz()
   }
   
@@ -409,6 +553,28 @@
   }
   
   onMounted(() => {
+    // 设置默认布局：列=日期(月聚合)，行=客户、平台、GMV
+    const defaultCols = [
+      { key: '日期', fieldType: 'dim', uid: Date.now() + 1, dateAgg: 'month' }
+    ]
+    
+    const defaultRows = [
+      { key: '客户', fieldType: 'dim', uid: Date.now() + 2 },
+      { key: '平台', fieldType: 'dim', uid: Date.now() + 3 },
+      { key: 'GMV', fieldType: 'measure', uid: Date.now() + 4 }
+    ]
+    
+    state.cols = defaultCols
+    state.rows = defaultRows
+    
+    // 为维度字段初始化筛选器
+    initFilter('日期')
+    initFilter('客户')  
+    initFilter('平台')
+    
+    // 渲染初始视图
+    renderViz()
+    
     window.addEventListener('resize', () => {
       chartInstance && chartInstance.resize()
     })
@@ -427,10 +593,13 @@
           <span class="title">自助分析 <small>Self-Service BI</small></span>
         </div>
         <a-space>
+          <a-button size="small" type="primary" @click="exportData">
+            <template #icon><IconFile /></template> 导出
+          </a-button>
           <a-button size="small" type="secondary" @click="renderViz">
             <template #icon><IconRefresh /></template> 刷新
           </a-button>
-          <a-button size="small" status="danger" @click="() => { state.cols=[]; state.rows=[]; renderViz() }">
+          <a-button size="small" status="danger" @click="() => { state.cols=[]; state.rows=[]; activeFilters.clear(); state.filters={}; renderViz() }">
             <template #icon><IconClose /></template> 清空
           </a-button>
         </a-space>
@@ -489,9 +658,53 @@
             </div>
           </a-card>
   
-          <!-- 筛选器卡 (占位) -->
+          <!-- 筛选器卡 -->
           <a-card class="control-card flex-1" title="筛选器" size="small" :bordered="true">
-            <div class="empty-filter">拖拽维度至此筛选</div>
+            <div v-if="activeFilters.size === 0" class="empty-filter">拖拽维度至此筛选</div>
+            
+            <div v-else class="filters-container">
+              <div 
+                v-for="fieldKey in Array.from(activeFilters)" 
+                :key="fieldKey"
+                class="filter-item"
+              >
+                <div class="filter-header">
+                  <span class="filter-title">{{ fieldKey }}</span>
+                  <a-button size="mini" type="text" @click="removeFilter(fieldKey)">
+                    <template #icon><IconClose style="font-size: 10px" /></template>
+                  </a-button>
+                </div>
+                
+                <div class="filter-controls">
+                  <a-button 
+                    size="mini" 
+                    type="text" 
+                    @click="toggleSelectAll(fieldKey)"
+                    class="select-all-btn"
+                  >
+                    {{ state.filters[fieldKey]?.selected.size === state.filters[fieldKey]?.options.length ? '取消全选' : '全选' }}
+                  </a-button>
+                </div>
+                
+                <a-select
+                  :model-value="Array.from(state.filters[fieldKey]?.selected || [])"
+                  @update:model-value="(vals) => updateFilterSelection(fieldKey, vals)"
+                  multiple
+                  size="mini"
+                  :max-tag-count="2"
+                  placeholder="选择筛选值"
+                  style="width: 100%;"
+                >
+                  <a-option 
+                    v-for="option in state.filters[fieldKey]?.options || []" 
+                    :key="option" 
+                    :value="option"
+                  >
+                    {{ option }}
+                  </a-option>
+                </a-select>
+              </div>
+            </div>
           </a-card>
         </div>
   
@@ -718,6 +931,42 @@
     color: var(--color-text-4);
     text-align: center;
     margin-top: 20px;
+  }
+  
+  .filters-container {
+    max-height: 300px;
+    overflow-y: auto;
+  }
+  
+  .filter-item {
+    margin-bottom: 12px;
+    padding: 8px;
+    border: 1px solid var(--color-border-3);
+    border-radius: 4px;
+    background: var(--color-fill-1);
+  }
+  
+  .filter-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+  
+  .filter-title {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--color-text-2);
+  }
+  
+  .filter-controls {
+    margin-bottom: 6px;
+  }
+  
+  .select-all-btn {
+    font-size: 10px;
+    padding: 2px 4px;
+    height: auto;
   }
   
   /* 画板区域 */
