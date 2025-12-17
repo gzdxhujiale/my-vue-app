@@ -186,6 +186,16 @@
     }
   }
   
+  const updateMeasureFilter = (fieldKey, operator, value, minValue, maxValue) => {
+    if (state.filters[fieldKey] && state.filters[fieldKey].fieldType === 'measure') {
+      state.filters[fieldKey].operator = operator
+      state.filters[fieldKey].value = value
+      state.filters[fieldKey].minValue = minValue
+      state.filters[fieldKey].maxValue = maxValue
+      renderViz()
+    }
+  }
+  
   const toggleSelectAll = (fieldKey) => {
     if (!state.filters[fieldKey]) return
     
@@ -763,7 +773,12 @@
                   <span class="filter-title">{{ fieldKey }}</span>
                   <div class="filter-header-actions">
                     <span class="selected-count" v-if="!expandedFilters.has(fieldKey)">
-                      {{ state.filters[fieldKey]?.selected.size || 0 }}/{{ state.filters[fieldKey]?.options.length || 0 }}
+                      <template v-if="state.filters[fieldKey]?.fieldType === 'dim'">
+                        {{ state.filters[fieldKey]?.selected?.size || 0 }}/{{ state.filters[fieldKey]?.options?.length || 0 }}
+                      </template>
+                      <template v-else>
+                        {{ state.filters[fieldKey]?.operator === 'all' ? '无筛选' : state.filters[fieldKey]?.operator }}
+                      </template>
                     </span>
                     <IconCaretDown 
                       class="expand-icon" 
