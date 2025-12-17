@@ -1,5 +1,5 @@
 <script setup>
-  import { ref, reactive, onMounted } from 'vue'
+  import { ref, reactive, onMounted, watch, computed } from 'vue'
   import { 
     IconCalendar, IconUser, IconApps, IconFile, 
     IconBarChart, IconOrderedList, IconSettings,
@@ -20,18 +20,47 @@
   // 引入同目录下的数据文件 (请确保 ecommerce_data.js 使用 export const ECOMMERCE_DATA = ... 导出)
   import { ECOMMERCE_DATA } from './ecommerce_data.js'
   
-  // --- 数据源 ---
-  const rawData = ECOMMERCE_DATA
+  // --- 状态管理（使用Pinia） ---
+  import { useBiStore } from '../../../stores/biStore'
+  import { storeToRefs } from 'pinia'
+  const biStore = useBiStore()
   
-  // --- 常量定义 ---
-  const dimensions = [
+  // 使用storeToRefs保持响应性
+  const { 
+    state, 
+    activeFilters, 
+    expandedFilters,
+    rawData,
+    dimensions,
+    measures,
+    chartTypes,
+    dateAggOptions
+  } = storeToRefs(biStore)
+  
+  const { 
+    initFilter, 
+    removeFilter, 
+    updateDateAggregation,
+    toggleFilterDropdown, 
+    toggleOption, 
+    toggleSelectAll, 
+    updateFilterSelection, 
+    updateMeasureFilter,
+    initializeDataSource,
+    aggregateDate,
+    aggregateData,
+    exportToCSV
+  } = biStore
+  
+  // 初始化数据源（将常量数据加载到 store）
+  const DIMENSIONS = [
     { key: '日期', type: 'date', icon: IconCalendar, allowAgg: true },
     { key: '客户', type: 'string', icon: IconUser },
     { key: '平台', type: 'string', icon: IconApps },
     { key: '店铺名称', type: 'string', icon: IconFile }
   ]
   
-  const measures = [
+  const MEASURES = [
     { key: 'GMV', type: 'number', icon: IconBarChart },
     { key: '订单数', type: 'number', icon: IconOrderedList },
     { key: '销售件数', type: 'number', icon: IconBarChart },
@@ -54,37 +83,8 @@
     { key: '客单价', type: 'number', icon: IconBarChart }
   ]
   
-  const chartTypes = [
-    { label: '柱状图', value: 'bar' },
-    { label: '折线图', value: 'line' },
-    { label: '面积图', value: 'area' },
-    { label: '明细表', value: 'table' },
-  ]
-  
-  const dateAggOptions = [
-    { value: 'day', label: '日' },
-    { value: 'month', label: '月' },
-    { value: 'quarter', label: '季度' },
-    { value: 'year', label: '年' }
-  ]
-  
-  // --- 状态管理（使用Pinia） ---
-  import { useBiStore } from '../../../stores/biStore'
-  import { storeToRefs } from 'pinia'
-  import { computed } from 'vue'
-  const biStore = useBiStore()
-  
-  // 使用storeToRefs保持响应性
-  const { state, activeFilters, expandedFilters } = storeToRefs(biStore)
-  const { 
-    initFilter, 
-    removeFilter, 
-    toggleFilterDropdown, 
-    toggleOption, 
-    toggleSelectAll, 
-    updateFilterSelection, 
-    updateMeasureFilter 
-  } = biStore
+  // 初始化 Store 数据
+  initializeDataSource(ECOMMERCE_DATA, DIMENSIONS, MEASURES)
 
   // 安全的状态访问器，提供默认值
   const safeState = computed(() => state.value || {
@@ -95,56 +95,38 @@
     colorPalette: 'default'
   })
   
-  // 拖拽相关
-  const draggedField = ref(null)
-  
   // DOM 引用
   const vizContainer = ref(null)
   let chartInstance = null
   let gridApi = null
+  let currentChartType = null // 追踪当前图表类型，用于实例复用判断
   
-  // --- 工具函数：日期处理 ---
-  const aggregateDate = (dateStr, aggType) => {
-    const date = new Date(dateStr)
-    if (isNaN(date.getTime())) return dateStr
+  // 拖拽相关（保留组件内部，纯 UI 状态）
+  const draggedField = ref(null)
+
+  // --- 包装函数用于特殊处理 ---
+  const toggleOptionHandler = (fieldKey, option, checked) => {
+    const filter = state.value.filters[fieldKey]
+    if (!filter || filter.fieldType !== 'dim') return
     
-    const y = date.getFullYear()
-    const m = String(date.getMonth() + 1).padStart(2, '0')
-    // const d = String(date.getDate()).padStart(2, '0')
-    const q = Math.ceil((date.getMonth() + 1) / 3)
+    const index = filter.selected.indexOf(option)
     
-    switch(aggType) {
-      case 'day': return dateStr
-      case 'month': return `${y}-${m}`
-      case 'quarter': return `${y}-Q${q}`
-      case 'year': return `${y}`
-      default: return dateStr
+    if (checked && index === -1) {
+      filter.selected.push(option)
+    } else if (!checked && index > -1) {
+      filter.selected.splice(index, 1)
     }
   }
 
-  // --- 包装Store方法以触发渲染 ---
-  const initFilterWithRender = (fieldKey, field = null) => {
-    initFilter(fieldKey, field, rawData)
-  }
-
-  const toggleOptionWithRender = (fieldKey, option) => {
-    toggleOption(fieldKey, option)
-    renderViz()
-  }
-
-  const toggleSelectAllWithRender = (fieldKey) => {
-    toggleSelectAll(fieldKey)
-    renderViz()
-  }
-
-  const updateFilterSelectionWithRender = (fieldKey, selectedValues) => {
-    updateFilterSelection(fieldKey, selectedValues)
-    renderViz()
-  }
-
-  const updateMeasureFilterWithRender = (fieldKey, operator, value, minValue, maxValue) => {
-    updateMeasureFilter(fieldKey, operator, value, minValue, maxValue)
-    renderViz()
+  const toggleSelectAllHandler = (fieldKey, checked) => {
+    const filter = state.value.filters[fieldKey]
+    if (!filter || filter.fieldType !== 'dim') return
+    
+    if (checked) {
+      filter.selected.splice(0, filter.selected.length, ...filter.options)
+    } else {
+      filter.selected.splice(0)
+    }
   }
   
   // --- 导出功能 ---
@@ -158,183 +140,36 @@
       return
     }
     
-    // 获取聚合后的数据
-    const aggregatedData = aggregateWithArquero(rawData, allDims, metrics)
-    const { keys, groups } = aggregatedData
-    
-    // 构造导出数据
-    const exportRows = []
-    
-    // 表头
-    const headers = [
-      ...allDims.map(d => d.key),
-      ...metrics.map(m => m.key)
-    ]
-    exportRows.push(headers.join(','))
-    
-    // 数据行
-    keys.forEach(k => {
-      const row = []
-      allDims.forEach(d => row.push(groups[k].meta[d.key] || ''))
-      metrics.forEach(m => row.push(groups[k].values[m.key] || 0))
-      exportRows.push(row.join(','))
-    })
-    
-    // 下载CSV
-    const csvContent = exportRows.join('\n')
-    const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' })
-    const link = document.createElement('a')
-    const url = URL.createObjectURL(blob)
-    link.setAttribute('href', url)
-    link.setAttribute('download', `自助分析数据_${new Date().toISOString().slice(0, 10)}.csv`)
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
+    // 使用 Store 的聚合和导出方法
+    const aggregatedData = aggregateData(aq, allDims, metrics)
+    exportToCSV(aggregatedData, allDims, metrics)
   }
   
-  // --- 核心聚合逻辑 (基于 Arquero) ---
-  // 移植自 self_service_bi.html 中的 aggregateWithArquero
-  const aggregateWithArquero = (data, dims, metrics) => {
-    console.log('聚合函数调用:', { data: data.length, dims, metrics })
-    
-    if (!aq) {
-      console.error('Arquero 未加载，无法聚合数据')
-      return { keys: [], groups: {} }
-    }
-  
-    // 1. 筛选 (Filtering)
-    let filteredData = data.filter(row => {
-      // 遍历所有筛选器
-      for (const [key, filter] of Object.entries(safeState.value.filters)) {
-        
-        if (filter.fieldType === 'measure') {
-          // 度量筛选逻辑
-          const value = parseFloat(row[key])
-          if (isNaN(value)) continue
-          
-          switch (filter.operator) {
-            case 'gt':
-              if (filter.value !== null && value <= filter.value) return false
-              break
-            case 'lt':
-              if (filter.value !== null && value >= filter.value) return false
-              break
-            case 'eq':
-              if (filter.value !== null && value !== filter.value) return false
-              break
-            case 'between':
-              if (filter.minValue !== null && value < filter.minValue) return false
-              if (filter.maxValue !== null && value > filter.maxValue) return false
-              break
-            case 'all':
-            default:
-              // 不筛选
-              break
-          }
-        } else {
-          // 维度筛选逻辑
-          if (!filter.selected || filter.selected.length === 0) continue
-          
-          let valueToCheck = row[key]
-          
-          // 特殊处理：如果是日期字段且有聚合设置，需要对比聚合后的值
-          if (filter.dateAgg && key === '日期') {
-            valueToCheck = aggregateDate(row[key], filter.dateAgg)
-          }
-          
-          if (!filter.selected.includes(valueToCheck)) {
-            return false
-          }
-        }
-      }
-      return true
-    })
-  
-    // 2. 创建 Arquero 表
-    let table = aq.from(filteredData)
-    console.log('Arquero 表创建成功，行数:', table.numRows())
-  
-    // 3. 派生字段 (Derived Fields) - 主要用于日期聚合
-    dims.forEach(d => {
-      if (d.key === '日期' && d.dateAgg) {
-        const aggKey = `${d.key}_agg`
-        // 使用 Arquero 的 escape 逃逸函数处理自定义 JS 逻辑
-        table = table.derive({
-          [aggKey]: aq.escape(row => aggregateDate(row[d.key], d.dateAgg))
-        })
-      }
-    })
-  
-    // 4. 定义分组键 (Group Keys)
-    const groupFields = dims.map(d => {
-      if (d.key === '日期' && d.dateAgg) {
-        return `${d.key}_agg`
-      }
-      return d.key
-    })
-  
-    // 5. 定义聚合操作 (Rollup Specs)
-    const rollupSpec = {}
-    metrics.forEach(m => {
-      rollupSpec[m.key] = aq.op.sum(m.key)
-    })
-  
-    // 6. 执行分组与聚合
-    if (groupFields.length > 0) {
-      table = table.groupby(groupFields).rollup(rollupSpec)
-    } else {
-      table = table.rollup(rollupSpec)
-    }
-  
-    // 7. 转换输出格式 (Transform to Format suitable for Rendering)
-    // 将扁平的 Arquero 对象转换为按 Key 分组的 Map 结构，方便 AG Grid 交叉表和 ECharts 渲染
-    const result = table.objects()
-    console.log('Arquero 聚合结果:', result)
-    const groups = {}
-  
-    result.forEach(row => {
-      // 生成唯一行 Key (用于 ECharts X轴 或 AG Grid 行)
-      const rowKey = dims.map(d => {
-        const fieldName = (d.key === '日期' && d.dateAgg) ? `${d.key}_agg` : d.key
-        return row[fieldName]
-      }).join(' / ') || '总计'
-  
-      groups[rowKey] = {
-        meta: {},   // 存储维度信息
-        values: {}, // 存储度量值
-        count: 1
-      }
-  
-      // 填充 Meta
-      dims.forEach(d => {
-        const fieldName = (d.key === '日期' && d.dateAgg) ? `${d.key}_agg` : d.key
-        groups[rowKey].meta[d.key] = row[fieldName]
-      })
-  
-      // 填充 Values
-      metrics.forEach(m => {
-        groups[rowKey].values[m.key] = row[m.key] || 0
-      })
-    })
-  
-    const sortedKeys = Object.keys(groups).sort()
-    return { keys: sortedKeys, groups }
-  }
-  
-  // --- 渲染引擎：图表 ---
+  // --- 渲染引擎：图表（支持实例复用）---
   const renderEChart = (container, aggregatedData, metrics, chartType) => {
     if (metrics.length === 0) return
     const { keys, groups } = aggregatedData
     
-    if (chartInstance) { chartInstance.dispose(); chartInstance = null }
+    // 判断是否需要重新创建实例（图表类型改变或实例不存在）
+    const needRecreate = !chartInstance || currentChartType !== chartType
     
-    const chartDiv = document.createElement('div')
-    chartDiv.style.width = '100%'
-    chartDiv.style.height = '100%'
-    chartDiv.style.minHeight = '400px'
-    container.appendChild(chartDiv)
-    
-    chartInstance = echarts.init(chartDiv)
+    if (needRecreate) {
+      // 销毁旧实例
+      if (chartInstance) {
+        chartInstance.dispose()
+        chartInstance = null
+      }
+      
+      // 创建容器和新实例
+      const chartDiv = document.createElement('div')
+      chartDiv.style.width = '100%'
+      chartDiv.style.height = '100%'
+      chartDiv.style.minHeight = '400px'
+      container.appendChild(chartDiv)
+      
+      chartInstance = echarts.init(chartDiv)
+      currentChartType = chartType
+    }
     
     const isBar = chartType === 'bar'
     
@@ -360,10 +195,11 @@
       },
       yAxis: { type: 'value' },
       series: seriesData,
-      animationDuration: 500
+      animationDuration: needRecreate ? 500 : 300 // 复用时动画更快
     }
     
-    chartInstance.setOption(option)
+    // 使用 notMerge 参数确保数据完全更新
+    chartInstance.setOption(option, { notMerge: needRecreate })
   }
   
   // --- 渲染引擎：AG Grid ---
@@ -393,7 +229,7 @@
           headerName: d.key, 
           field: d.key, 
           pinned: 'left',
-          width: 80, // 4个中文字符宽度 (约20px/字符)
+          width: 80,
           minWidth: 80,
           maxWidth: 120
         })),
@@ -402,7 +238,8 @@
           field: m.key, 
           type: 'numericColumn',
           valueFormatter: p => p.value ? Math.round(p.value).toLocaleString() : '',
-          minWidth: 44 // 再次减少1/3，从66减少到44
+          width: 130,
+          minWidth: 130
         }))
       ]
       const rowData = keys.map(k => {
@@ -462,7 +299,8 @@
           field: `${cv}_${metrics[0].key}`,
           type: 'numericColumn',
           valueFormatter: p => p.value ? Math.round(p.value).toLocaleString() : '',
-          minWidth: 44 // 再次减少1/3，从66减少到44
+          width: 130,
+          minWidth: 130
         })
       } else {
         columnDefs.push({
@@ -472,7 +310,8 @@
             field: `${cv}_${m.key}`,
             type: 'numericColumn',
             valueFormatter: p => p.value ? Math.round(p.value).toLocaleString() : '',
-            minWidth: 44 // 再次减少1/3，从66减少到44
+            width: 130,
+            minWidth: 130
           }))
         })
       }
@@ -492,7 +331,7 @@
     gridApi = createGrid(gridDiv, { 
       columnDefs, 
       rowData, 
-      defaultColDef: { minWidth: 100, sortable: true, resizable: true },
+      defaultColDef: { minWidth: 80, sortable: true, resizable: true },
       theme: "legacy"
     })
   }
@@ -509,8 +348,15 @@
   
     // 空状态
     if (allDims.length === 0 && metrics.length === 0) {
-      if (chartInstance) { chartInstance.dispose(); chartInstance = null }
-      if (gridApi) { gridApi.destroy(); gridApi = null }
+      if (chartInstance) { 
+        chartInstance.dispose()
+        chartInstance = null
+        currentChartType = null
+      }
+      if (gridApi) { 
+        gridApi.destroy()
+        gridApi = null
+      }
       vizContainer.value.innerHTML = `
         <div class="empty-state">
           <span class="empty-icon"><svg width="48" height="48" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 36V42H42V36M6 24V30H42V24M6 12V18H42V12"/></svg></span>
@@ -519,13 +365,25 @@
       return
     }
   
-    // 清空容器
-    if (chartInstance) { chartInstance.dispose(); chartInstance = null }
-    if (gridApi) { gridApi.destroy(); gridApi = null }
-    vizContainer.value.innerHTML = ''
+    // 清空容器（只在切换到表格或从表格切换时销毁）
+    const isTable = safeState.value.chartType === 'table'
+    const wasTable = gridApi !== null
+    
+    if (isTable && chartInstance) {
+      chartInstance.dispose()
+      chartInstance = null
+      currentChartType = null
+    }
+    if (!isTable && gridApi) {
+      gridApi.destroy()
+      gridApi = null
+    }
+    if (isTable || wasTable) {
+      vizContainer.value.innerHTML = ''
+    }
 
-    // 1. Arquero 聚合
-    const aggregatedData = aggregateWithArquero(rawData, allDims, metrics)
+    // 1. 使用 Store 的聚合方法
+    const aggregatedData = aggregateData(aq, allDims, metrics)
     console.log('准备渲染:', { aggregatedData, chartType: safeState.value.chartType })
 
     // 2. 路由渲染
@@ -554,10 +412,10 @@
     if (targetShelf === 'rows' && state.value) state.value.rows.push(field)
     
     // 自动创建筛选器（维度和度量都支持）
-    initFilterWithRender(field.key, field) // 传递field对象
+    initFilter(field.key, field, rawData.value)
     
     draggedField.value = null
-    renderViz()
+    // watch 会自动触发渲染
   }
   
   const removeField = (shelf, index) => {
@@ -575,20 +433,31 @@
     }
     
     // 检查该字段是否还在其他架子上，如果没有则移除筛选器
-    if (removedField && removedField.fieldType === 'dim') {
+    if (removedField) {
       const stillInUse = [...state.value.cols, ...state.value.rows].some(f => f.key === removedField.key)
       if (!stillInUse) {
         removeFilter(removedField.key)
       }
     }
-    
-    renderViz()
+    // watch 会自动触发渲染
   }
   
   const handleDateAggChange = (field, newAgg) => {
     field.dateAgg = newAgg
-    renderViz()
+    // 更新筛选器中的日期聚合选项
+    if (field.key === '日期') {
+      updateDateAggregation('日期', newAgg, rawData.value)
+    }
   }
+  
+  // --- 自动渲染：监听状态变化 ---
+  watch(
+    () => [state.value.cols, state.value.rows, state.value.filters, state.value.chartType],
+    () => {
+      renderViz()
+    },
+    { deep: true }
+  )
   
   onMounted(() => {
     // 设置默认布局：列=日期(月聚合)，行=客户、平台、GMV
@@ -608,13 +477,12 @@
     }
     
     // 为字段初始化筛选器，传递field对象以正确处理聚合
-    initFilterWithRender('日期', defaultCols[0]) // 传递日期field对象，包含dateAgg
-    initFilterWithRender('客户', defaultRows[0])  
-    initFilterWithRender('平台', defaultRows[1])
-    initFilterWithRender('GMV', defaultRows[2]) // 为GMV度量添加筛选器
+    initFilter('日期', defaultCols[0], rawData.value) // 传递日期field对象，包含dateAgg
+    initFilter('客户', defaultRows[0], rawData.value)  
+    initFilter('平台', defaultRows[1], rawData.value)
+    initFilter('GMV', defaultRows[2], rawData.value) // 为GMV度量添加筛选器
     
-    // 渲染初始视图
-    renderViz()
+    // watch 会自动触发首次渲染
     
     window.addEventListener('resize', () => {
       chartInstance && chartInstance.resize()
@@ -640,7 +508,7 @@
           <a-button size="small" type="secondary" @click="renderViz">
             <template #icon><IconRefresh /></template> 刷新
           </a-button>
-          <a-button size="small" status="danger" @click="() => { if(state.value) { state.value.cols=[]; state.value.rows=[]; activeFilters.value.clear(); state.value.filters={}; renderViz() } }">
+          <a-button size="small" status="danger" @click="() => { if(state.value) { state.value.cols=[]; state.value.rows=[]; activeFilters.value.clear(); state.value.filters={}; } }">
             <template #icon><IconClose /></template> 清空
           </a-button>
         </a-space>
@@ -689,7 +557,7 @@
           <!-- 标记卡 -->
           <a-card class="control-card" title="标记" size="small" :bordered="true">
             <template #extra>Automatic</template>
-            <a-select v-model="state.chartType" @change="renderViz" size="small">
+            <a-select v-model="state.chartType" size="small">
               <a-option v-for="t in chartTypes" :key="t.value" :value="t.value">{{ t.label }}</a-option>
             </a-select>
             
@@ -742,9 +610,9 @@
                         <!-- 全选选项 -->
                         <div class="dropdown-item select-all-item">
                           <a-checkbox 
-                            :checked="safeState.filters[fieldKey]?.selected?.length === safeState.filters[fieldKey]?.options?.length"
+                            :model-value="safeState.filters[fieldKey]?.selected?.length === safeState.filters[fieldKey]?.options?.length"
                             :indeterminate="safeState.filters[fieldKey]?.selected?.length > 0 && safeState.filters[fieldKey]?.selected?.length < safeState.filters[fieldKey]?.options?.length"
-                            @change="toggleSelectAllWithRender(fieldKey)"
+                            @change="(checked) => toggleSelectAllHandler(fieldKey, checked)"
                           >
                             全选
                           </a-checkbox>
@@ -760,8 +628,8 @@
                             class="dropdown-item option-item"
                           >
                             <a-checkbox 
-                              :checked="safeState.filters[fieldKey]?.selected?.includes(option)"
-                              @change="toggleOptionWithRender(fieldKey, option)"
+                              :model-value="safeState.filters[fieldKey]?.selected?.includes(option)"
+                              @change="(checked) => toggleOptionHandler(fieldKey, option, checked)"
                             >
                               {{ option }}
                             </a-checkbox>
