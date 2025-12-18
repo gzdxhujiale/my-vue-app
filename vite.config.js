@@ -5,7 +5,7 @@ import { resolve } from 'path'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [vue()],
-  base: '/my-vue-app/', // GitHub Pages 基础路径
+  base: '/', // GitHub Pages 基础路径
   resolve: {
     alias: {
       '@': resolve(__dirname, 'src')

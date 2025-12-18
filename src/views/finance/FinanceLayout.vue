@@ -15,6 +15,9 @@
   const collapsed = ref(false)
   const showCopyrightModal = ref(true)
   
+  // 默认展开的菜单项
+  const defaultOpenKeys = ['/finance/report-center', '/finance/bi-center']
+  
   // 菜单配置数据 (图标已替换为 Arco 组件)
   const menuGroups = [
     {
@@ -150,6 +153,7 @@
           <div class="menu-wrapper">
             <a-menu
               :selected-keys="selectedKeys"
+              :default-open-keys="defaultOpenKeys"
               :collapsed="collapsed"
               :auto-open-selected="true"
               :level-indent="16"
