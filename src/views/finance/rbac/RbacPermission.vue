@@ -1,61 +1,59 @@
 <template>
   <a-layout class="permission-layout">
-    <!-- 顶部通栏：更清爽的头部 -->
-    <a-layout-header class="page-header">
-      <div class="header-left">
-        <div class="brand-logo">
-          <icon-safe class="brand-icon-svg" />
+    <!-- 顶部通栏 -->
+    <div class="header-section">
+      <div class="header-content">
+        <div class="title-group">
+          <div class="icon-wrapper">
+            <icon-safe size="24" />
+          </div>
+          <div>
+            <h1 class="page-title">权限配置中心</h1>
+            <p class="page-subtitle">管理角色功能授权与数据访问策略</p>
+          </div>
         </div>
-        <div class="brand-info">
-          <div class="brand-title">权限配置中心</div>
-          <div class="brand-desc">管理角色功能授权与数据访问策略</div>
+        <div class="header-actions">
+          <a-radio-group type="button" v-model="activeTab" size="large">
+            <a-radio value="function">功能权限</a-radio>
+            <a-radio value="data">数据权限</a-radio>
+          </a-radio-group>
         </div>
       </div>
-      <div class="header-right">
-        <a-radio-group type="button" v-model="activeTab" size="large">
-          <a-radio value="function">功能权限</a-radio>
-          <a-radio value="data">数据权限</a-radio>
-        </a-radio-group>
-      </div>
-    </a-layout-header>
+    </div>
 
     <a-layout class="page-body">
       <!-- 左侧边栏：角色列表 -->
-      <a-layout-sider :width="260" class="role-sider">
-        <div class="sider-toolbar">
-          <a-input-search 
-            placeholder="搜索角色..." 
-            allow-clear 
-            class="role-search"
-          />
+      <a-layout-sider :width="280" class="role-sider">
+        <div class="list-header">
+          <h3 class="list-title">角色列表</h3>
+          <span class="list-subtitle">点击查看详情</span>
         </div>
-        <div class="role-list-container custom-scroll">
-          <div class="list-header-label">系统角色 ({{ roles.length }})</div>
-          <a-list :split="false" :bordered="false" hoverable>
-            <a-list-item 
-              v-for="role in roles" 
-              :key="role.id" 
-              class="role-item"
-              :class="{ 'role-active': selectedRole.id === role.id }"
-              @click="handleRoleSelect(role)"
-            >
-              <div class="role-item-inner">
-                <a-avatar 
-                  :size="32" 
-                  :style="{ backgroundColor: selectedRole.id === role.id ? 'rgb(var(--primary-6))' : '#F2F3F5', color: selectedRole.id === role.id ? '#FFF' : '#4E5969' }"
-                  class="role-avatar"
-                >
-                  {{ role.name[0] }}
-                </a-avatar>
-                <div class="role-info">
-                  <div class="role-name">{{ role.name }}</div>
-                  <div class="role-meta" v-if="role.permissions.includes('all')">超级管理员</div>
-                  <div class="role-meta" v-else>{{ role.permissions.length }} 项权限</div>
-                </div>
-                <icon-right class="role-arrow" />
+        <div class="role-list custom-scroll">
+          <div 
+            v-for="role in roles" 
+            :key="role.id" 
+            class="role-item"
+            :class="{ 'role-active': selectedRole.id === role.id }"
+            @click="handleRoleSelect(role)"
+          >
+            <div class="role-item-inner">
+              <a-avatar 
+                :size="32" 
+                :style="{ backgroundColor: selectedRole.id === role.id ? 'rgb(var(--primary-6))' : '#F2F3F5', color: selectedRole.id === role.id ? '#FFF' : '#4E5969' }"
+                class="role-avatar"
+              >
+                {{ role.name[0] }}
+              </a-avatar>
+              <div class="role-info">
+                <div class="role-name">{{ role.name }}</div>
+                <div class="role-meta">{{ role.desc }}</div>
               </div>
-            </a-list-item>
-          </a-list>
+              <div class="role-count">
+                <icon-lock size="14" />
+                <span>{{ role.permissions.includes('all') ? 'All' : role.permissions.length }}</span>
+              </div>
+            </div>
+          </div>
         </div>
       </a-layout-sider>
 
@@ -296,13 +294,18 @@ const TreeNode = defineComponent({
           h('span', { class: 'tree-icon-expand mr-2' }, 
             hasChildren ? (isExpanded ? h(IconDown) : h(IconRight)) : h('span', { class: 'spacer' })
           ),
+          
+          // Checkbox for selection state
+          // 优化：仅在叶子节点显示复选框，减少视觉干扰
+          (!hasChildren) ? h('div', { class: `checkbox-wrapper mr-3 ${hasPerm ? 'checked' : ''}` }, [
+             hasPerm ? h(IconCheck, { size: 12, style: { color: '#fff' } }) : null
+          ]) : null,
+
           isFolder ? h(IconFolder, { class: 'tree-icon-type text-amber mr-2' }) : h(IconFile, { class: 'tree-icon-type text-gray mr-2' }),
           h('span', { class: 'tree-text flex-1' }, node.name),
           
-          node.type === 'action' && h('div', { class: `status-badge ${hasPerm ? 'badge-success' : 'badge-normal'}` }, 
-            hasPerm ? h(IconCheck, { size: 12 }) : null
-          ),
-          node.type === 'menu' && h('span', { class: 'type-tag' }, '菜单')
+          node.type === 'menu' && h('span', { class: 'type-tag' }, '菜单'),
+          node.type === 'action' && h('span', { class: 'type-tag action' }, '操作')
         ]),
         (hasChildren && isExpanded) 
           ? h('div', { class: 'tree-children' }, node.children.map(child => h(TreeNode, {
@@ -377,12 +380,12 @@ const PERMISSION_TREE = [
 ];
 
 const ROLES = [
-    { id: 1, name: '超级管理员', permissions: ['all'] },
-    { id: 2, name: '运维工程师', permissions: ['rbac:log:view', 'config:management:view'] },
-    { id: 3, name: '数据质量管理员', permissions: ['report:center', 'report:company:view', 'workspace:todo:view'] },
-    { id: 4, name: '数据资产管理员', permissions: ['report:center', 'report:company:view', 'config:management:view'] },
-    { id: 5, name: '财务BI', permissions: ['report:center', 'report:company:view', 'report:bi:view'] },
-    { id: 6, name: '业务BI', permissions: ['report:center', 'report:ameba:view', 'report:store:view'] },
+    { id: 1, name: '超级管理员', desc: '拥有系统所有权限', permissions: ['all'] },
+    { id: 2, name: '运维工程师', desc: '负责系统运维、日志管理', permissions: ['rbac:log:view', 'config:management:view'] },
+    { id: 3, name: '数据质量管理员', desc: '负责数据质量监控与管理', permissions: ['report:center', 'report:company:view', 'workspace:todo:view'] },
+    { id: 4, name: '数据资产管理员', desc: '负责数据资产盘点与管理', permissions: ['report:center', 'report:company:view', 'config:management:view'] },
+    { id: 5, name: '财务BI', desc: '财务部门数据分析师', permissions: ['report:center', 'report:company:view', 'report:bi:view'] },
+    { id: 6, name: '业务BI', desc: '业务部门数据分析师', permissions: ['report:center', 'report:ameba:view', 'report:store:view'] },
 ];
 
 const DATA_TABLES = [
@@ -598,53 +601,55 @@ const getFilterDisplay = (tableId) => {
 <style scoped>
 /* 全局变量与布局 */
 .permission-layout {
-  height: 100vh;
+  min-height: 100vh;
   background-color: var(--color-bg-1);
   display: flex;
   flex-direction: column;
 }
 
 /* 顶部导航 */
-.page-header {
-  height: 64px;
-  background: #fff;
+.header-section {
+  padding: 16px 24px;
+  background-color: #fff;
   border-bottom: 1px solid var(--color-border);
+}
+
+.header-content {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 24px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.02);
-  z-index: 10;
 }
 
-.header-left {
+.title-group {
   display: flex;
+  gap: 16px;
   align-items: center;
-  gap: 12px;
 }
 
-.brand-logo {
-  width: 36px;
-  height: 36px;
-  background: var(--color-fill-2);
-  border-radius: 8px;
+.icon-wrapper {
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #165dff 0%, #3c7eff 100%);
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: rgb(var(--primary-6));
+  color: #fff;
+  box-shadow: 0 4px 10px rgba(22, 93, 255, 0.2);
 }
-.brand-icon-svg { font-size: 20px; }
 
-.brand-title {
-  font-size: 16px;
+.page-title {
+  margin: 0;
+  font-size: 20px;
   font-weight: 600;
-  color: var(--color-text-1);
-  line-height: 1.2;
+  color: #1d2129;
+  line-height: 1.4;
 }
 
-.brand-desc {
-  font-size: 12px;
-  color: var(--color-text-3);
+.page-subtitle {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: #86909c;
 }
 
 /* 主体布局 */
@@ -668,21 +673,29 @@ const getFilterDisplay = (tableId) => {
   overflow: hidden;
 }
 
-.sider-toolbar {
+.list-header {
   padding: 16px;
   border-bottom: 1px solid var(--color-fill-3);
 }
 
-.role-list-container {
+.list-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1d2129;
+}
+
+.list-subtitle {
+  font-size: 12px;
+  color: #86909c;
+  margin-top: 4px;
+  display: block;
+}
+
+.role-list {
   flex: 1;
   overflow-y: auto;
   padding: 8px 0;
-}
-
-.list-header-label {
-  padding: 8px 16px;
-  font-size: 12px;
-  color: var(--color-text-3);
 }
 
 .role-item {
@@ -730,17 +743,21 @@ const getFilterDisplay = (tableId) => {
   font-size: 12px;
   color: var(--color-text-3);
   margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.role-arrow {
-  color: var(--color-text-4);
-  opacity: 0;
-  transition: opacity 0.2s;
+.role-count {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--color-text-3);
+  font-size: 12px;
 }
 
-.role-item.role-active .role-arrow {
-  opacity: 1;
-  color: rgb(var(--primary-6));
+.role-item.role-active .role-count {
+    color: rgb(var(--primary-6));
 }
 
 /* 内容区域 */
@@ -786,46 +803,72 @@ const getFilterDisplay = (tableId) => {
 /* 功能权限树 */
 .permission-tree-wrap {
   border: 1px solid var(--color-border);
-  border-radius: 4px;
-  padding: 8px 0;
+  border-radius: 8px;
+  padding: 8px;
+  background: #fff;
 }
 
 :deep(.tree-row) {
   display: flex;
   align-items: center;
-  padding: 10px 16px;
-  margin: 2px 8px;
-  border-radius: 4px;
+  padding: 12px 16px;
+  margin-bottom: 4px;
+  border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s;
   color: var(--color-text-2);
+  border: 1px solid transparent;
 }
 
-:deep(.tree-row:hover) { background-color: var(--color-fill-2); }
-:deep(.tree-row.row-active) { background-color: var(--color-primary-light-1); color: rgb(var(--primary-6)); }
-:deep(.tree-row.row-dimmed) { opacity: 0.5; }
+:deep(.tree-row:hover) { 
+  background-color: var(--color-fill-2); 
+}
 
-:deep(.spacer) { width: 14px; display: inline-block; }
-:deep(.tree-icon-expand) { font-size: 12px; width: 16px; display: inline-flex; justify-content: center; }
-:deep(.tree-text) { font-size: 14px; }
+:deep(.tree-row.row-active) { 
+  /* 去除背景高亮，仅保留文字颜色变化，减少视觉干扰 */
+  background-color: transparent; 
+  color: rgb(var(--primary-6)); 
+  font-weight: 500;
+}
 
-:deep(.status-badge) {
-  width: 18px; height: 18px;
-  border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  margin-left: auto;
-  border: 1.5px solid var(--color-border);
-  color: #fff;
+:deep(.tree-row.row-dimmed) { 
+  opacity: 0.6; 
+}
+
+:deep(.checkbox-wrapper) {
+  width: 16px;
+  height: 16px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #fff;
   transition: all 0.2s;
 }
-:deep(.status-badge.badge-success) { background-color: rgb(var(--success-6)); border-color: rgb(var(--success-6)); }
+
+:deep(.checkbox-wrapper.checked) {
+  background-color: rgb(var(--primary-6));
+  border-color: rgb(var(--primary-6));
+}
+
+:deep(.spacer) { width: 16px; display: inline-block; }
+:deep(.tree-icon-expand) { font-size: 12px; width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; border-radius: 4px; transition: background 0.2s; }
+:deep(.tree-icon-expand:hover) { background-color: var(--color-fill-3); }
+
+:deep(.tree-text) { font-size: 14px; font-weight: 500; }
+
 :deep(.type-tag) {
   margin-left: auto;
   font-size: 12px;
-  background-color: var(--color-fill-3);
-  padding: 2px 6px;
-  border-radius: 2px;
+  background-color: var(--color-fill-2);
+  padding: 2px 8px;
+  border-radius: 4px;
   color: var(--color-text-3);
+}
+:deep(.type-tag.action) {
+  background-color: var(--color-primary-light-1);
+  color: rgb(var(--primary-6));
 }
 
 /* 数据权限布局 */

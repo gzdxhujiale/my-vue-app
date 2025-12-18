@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import TaskDetail from './TaskDetail.vue'
+import { ListTodoIcon } from 'lucide-vue-next'
 import {
   IconApps, IconClockCircle, IconCheckCircle, IconSearch, 
   IconRefresh, IconRight, IconFilter
@@ -146,55 +147,46 @@ const getPlatformColor = (platform) => {
 </script>
 
 <template>
-  <div class="page-container">
-    <div class="content-wrapper">
-      
-      <!-- Header 区域 -->
-      <header v-if="view === 'list'" class="page-header">
-        <div class="header-left">
-          <a-typography-title :heading="3" class="main-title">工作台</a-typography-title>
-          <a-typography-text type="secondary" class="sub-title">高效处理您的财务数据上传任务</a-typography-text>
-        </div>
-        
-        <!-- 统计条：重构为扁平化通栏设计，更紧凑 -->
-        <div class="stat-bar">
-          <div class="stat-item">
-            <div class="stat-icon bg-indigo"><IconApps /></div>
-            <div class="stat-info">
-              <span class="stat-label">总任务</span>
-              <span class="stat-value">{{ stats.total }}</span>
-            </div>
+  <a-layout class="permission-layout">
+    <!-- 顶部通栏 -->
+    <div class="header-section">
+      <div class="header-content">
+        <div class="title-group">
+          <div class="icon-wrapper">
+            <ListTodoIcon :size="24" />
           </div>
-          
-          <div class="stat-divider"></div>
-
-          <div class="stat-item">
-            <div class="stat-icon bg-amber"><IconClockCircle /></div>
-            <div class="stat-info">
-              <span class="stat-label">待处理</span>
-              <span class="stat-value">{{ stats.pending }}</span>
-            </div>
-          </div>
-
-          <div class="stat-divider"></div>
-          
-          <div class="stat-item">
-            <div class="stat-icon bg-emerald"><IconCheckCircle /></div>
-            <div class="stat-info">
-              <span class="stat-label">已完成</span>
-              <span class="stat-value">{{ stats.done }}</span>
-            </div>
+          <div>
+            <h1 class="page-title">待办清单</h1>
+            <p class="page-subtitle">高效处理您的财务数据上传任务</p>
           </div>
         </div>
-      </header>
+        <div class="header-actions">
+           <div class="stat-group">
+             <div class="stat-item">
+               <div class="stat-label">总任务</div>
+               <div class="stat-value">{{ stats.total }}</div>
+             </div>
+             <div class="stat-divider"></div>
+             <div class="stat-item">
+               <div class="stat-label">待处理</div>
+               <div class="stat-value text-amber">{{ stats.pending }}</div>
+             </div>
+             <div class="stat-divider"></div>
+             <div class="stat-item">
+               <div class="stat-label">已完成</div>
+               <div class="stat-value text-emerald">{{ stats.done }}</div>
+             </div>
+           </div>
+        </div>
+      </div>
+    </div>
 
+    <a-layout class="page-body">
+      <a-layout-content class="content-area custom-scroll">
       <transition name="fade" mode="out-in">
         <!-- 列表视图容器 -->
-        <a-card 
-          v-if="view === 'list'" 
-          class="main-card" 
-          :bordered="false"
-        >
+        <div v-if="view === 'list'" key="list" class="list-view">
+        
           <!-- 工具栏 -->
           <div class="toolbar">
             <div class="toolbar-left">
@@ -322,7 +314,7 @@ const getPlatformColor = (platform) => {
               </a-button>
             </template>
           </a-table>
-        </a-card>
+        </div>
   
         <!-- 详情视图 -->
         <TaskDetail 
@@ -331,81 +323,81 @@ const getPlatformColor = (platform) => {
           :go-back="goBack" 
         />
       </transition>
-    </div>
-  </div>
+      </a-layout-content>
+    </a-layout>
+  </a-layout>
 </template>
 
 <style scoped>
-/* 页面容器 */
-.page-container {
+/* 全局变量与布局 */
+.permission-layout {
   min-height: 100vh;
-  background-color: var(--color-fill-2);
-  padding: 32px;
-  box-sizing: border-box;
+  background-color: var(--color-bg-1);
+  display: flex;
+  flex-direction: column;
 }
 
-.content-wrapper {
-  max-width: 1200px;
-  margin: 0 auto;
+/* 顶部导航 */
+.header-section {
+  padding: 16px 24px;
+  background-color: #fff;
+  border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
 }
 
-/* 头部样式 */
-.page-header {
+.header-content {
   display: flex;
   justify-content: space-between;
-  align-items: flex-end;
-  margin-bottom: 24px;
-  flex-wrap: wrap;
-  gap: 24px;
+  align-items: center;
 }
 
-.main-title {
-  margin: 0 0 8px 0;
-  font-size: 28px;
-  color: var(--color-text-1);
-  letter-spacing: -0.5px;
+.title-group {
+  display: flex;
+  gap: 16px;
+  align-items: center;
 }
 
-.sub-title {
-  font-size: 14px;
-  color: var(--color-text-3);
-}
-
-/* --- 统计条重构样式 --- */
-.stat-bar {
+.icon-wrapper {
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #165dff 0%, #3c7eff 100%);
+  border-radius: 12px;
   display: flex;
   align-items: center;
-  background: var(--color-bg-2);
-  padding: 12px 24px;
-  border-radius: 12px;
-  border: 1px solid var(--color-border-2);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
-  gap: 24px;
+  justify-content: center;
+  color: #fff;
+  box-shadow: 0 4px 10px rgba(22, 93, 255, 0.2);
+}
+
+.page-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: #1d2129;
+  line-height: 1.4;
+}
+
+.page-subtitle {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: #86909c;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+}
+
+.stat-group {
+  display: flex;
+  align-items: center;
+  gap: 16px;
 }
 
 .stat-item {
   display: flex;
-  align-items: center;
-  gap: 12px;
-  min-width: 100px; /* 紧凑宽度 */
-}
-
-.stat-icon {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 18px;
-}
-.bg-indigo { background-color: rgb(238, 242, 255); color: rgb(79, 70, 229); }
-.bg-amber { background-color: rgb(255, 251, 235); color: rgb(217, 119, 6); }
-.bg-emerald { background-color: rgb(236, 253, 245); color: rgb(5, 150, 105); }
-
-.stat-info {
-  display: flex;
   flex-direction: column;
+  align-items: flex-end;
 }
 
 .stat-label {
@@ -421,23 +413,43 @@ const getPlatformColor = (platform) => {
   line-height: 1.2;
 }
 
+.text-amber { color: rgb(217, 119, 6); }
+.text-emerald { color: rgb(5, 150, 105); }
+
 .stat-divider {
   width: 1px;
   height: 24px;
   background-color: var(--color-border-2);
 }
 
-/* 主卡片与工具栏 */
-.main-card {
-  border-radius: 8px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+/* 主体布局 */
+.page-body {
+  flex: 1;
+  padding: 16px;
+  background-color: var(--color-fill-2);
+  display: flex;
+  flex-direction: column;
 }
 
+.content-area {
+  background: #fff;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  padding: 24px;
+  border: 1px solid var(--color-border);
+  flex: 1; /* Fill remaining space */
+}
+
+/* --- 统计条重构样式 --- */
+/* Removed old stat-bar styles */
+
+/* Toolbar */
 .toolbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 0;
+  padding-bottom: 16px;
   margin-bottom: 0;
   flex-wrap: wrap;
   gap: 16px;
@@ -517,7 +529,7 @@ const getPlatformColor = (platform) => {
 
 /* 表格视觉优化 */
 .custom-table {
-  margin-top: 12px;
+  margin-top: 0;
 }
 
 :deep(.arco-table-th) {

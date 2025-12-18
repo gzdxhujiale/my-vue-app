@@ -1,54 +1,50 @@
 <template>
-  <div class="page-container">
-    <!-- 顶部导航与筛选区 -->
-    <div class="top-bar">
-      <div class="brand">
-        <!-- 面包屑导航 -->
-        <div class="breadcrumb-nav">
-           <div 
-             v-for="(item, index) in viewPath" 
-             :key="index"
-             class="crumb-item"
-             :class="{ active: index === viewPath.length - 1 }"
-             @click="navigateTo(index)"
-           >
-             <icon-apps v-if="item.id === 'root'" class="crumb-icon" />
-             <span class="crumb-text">{{ item.name }}</span>
-             <icon-right v-if="index < viewPath.length - 1" class="crumb-separator" />
-           </div>
+  <a-layout class="permission-layout">
+    <!-- 顶部通栏 -->
+    <div class="header-section">
+      <div class="header-content">
+        <div class="title-group">
+          <div class="icon-wrapper">
+            <ShoppingBagIcon :size="24" />
+          </div>
+          <div>
+            <h1 class="page-title">店铺经营分析</h1>
+            <p class="page-subtitle">E-commerce Store Performance</p>
+          </div>
         </div>
-      </div>
-      
-      <!-- 右侧控制区 -->
-      <div class="controls">
-        <div class="filter-pill">
-          <span class="label">年份</span>
-          <a-select v-model="selectedYear" :style="{width:'80px'}" size="small" :bordered="false">
-            <a-option value="2025">2025</a-option>
-            <a-option value="2024">2024</a-option>
-          </a-select>
+        <div class="header-actions">
+          <a-space>
+            <a-button v-if="currentStore" @click="navigateTo(0)" size="small">
+               <template #icon><icon-left /></template> 返回列表
+            </a-button>
+            <div class="filter-pill">
+              <span class="label">年份</span>
+              <a-select v-model="selectedYear" :style="{width:'80px'}" size="small" :bordered="false">
+                <a-option value="2025">2025</a-option>
+                <a-option value="2024">2024</a-option>
+              </a-select>
+            </div>
+            <div class="filter-pill">
+              <span class="label">期间</span>
+              <a-select v-model="selectedMonth" :style="{width:'100px'}" size="small" :bordered="false">
+                <a-option value="all">全年</a-option>
+                <a-option v-for="m in 12" :key="m" :value="String(m)">{{ m }}月</a-option>
+              </a-select>
+            </div>
+
+          </a-space>
         </div>
-        <div class="filter-pill">
-          <span class="label">期间</span>
-          <a-select v-model="selectedMonth" :style="{width:'90px'}" size="small" :bordered="false">
-            <a-option value="all">全年</a-option>
-            <a-option v-for="m in 12" :key="m" :value="String(m)">{{ m }}月</a-option>
-          </a-select>
-        </div>
-         <a-button v-if="currentStore" size="small" type="outline" class="action-btn">
-            <template #icon><icon-download /></template> 导出报表
-         </a-button>
       </div>
     </div>
 
-    <!-- 内容区域 -->
-    <div class="content-wrapper">
+    <a-layout class="page-body">
+      <a-layout-content class="content-area custom-scroll">
       
       <!-- 视图 1: 首页仪表盘 -->
       <transition name="fade" mode="out-in">
         <div v-if="!currentStore" key="dashboard" class="dashboard-view">
           <!-- 核心指标卡片 -->
-          <a-row :gutter="16" class="mb-6">
+          <a-row :gutter="16" class="mb-2">
             <a-col :span="6" v-for="metric in metricCards" :key="metric.key">
               <div 
                 class="stat-card clickable" 
@@ -70,7 +66,7 @@
           <div class="main-card">
             <a-table 
               :data="currentStoreList" 
-              :pagination="{ pageSize: 10 }" 
+              :pagination="{ pageSize: 13 }" 
               :bordered="{wrapper: true, cell: false}"
               hoverable 
               row-class="cursor-pointer"
@@ -190,7 +186,10 @@
                 </div>
                 
                 <!-- 简单的操作按钮或状态 -->
-                <div>
+                <div class="flex items-center gap-3">
+                   <a-button size="small" type="outline">
+                      <template #icon><icon-download /></template> 导出
+                   </a-button>
                    <a-tag color="green" bordered>经营正常</a-tag>
                 </div>
              </div>
@@ -272,7 +271,7 @@
            </a-row>
         </div>
       </transition>
-    </div>
+    <!-- </div> -->
 
     <!-- 弹窗部分 -->
     <a-modal v-model:visible="metricVisible" :title="currentMetric?.title" :footer="false">
@@ -326,15 +325,18 @@
       </div>
     </a-modal>
 
-  </div>
+      </a-layout-content>
+    </a-layout>
+  </a-layout>
 </template>
 
 <script setup>
 import { ref, computed, reactive, watch, nextTick, onUnmounted } from 'vue';
 import * as echarts from 'echarts';
+import { ShoppingBagIcon } from 'lucide-vue-next';
 import { 
   IconBgColors, IconCaretUp, IconCaretDown, IconBarChart, 
-  IconRight, IconApps, IconDownload
+  IconRight, IconLeft, IconApps, IconDownload
 } from '@arco-design/web-vue/es/icon';
 
 // --- 数据生成逻辑 (Mock Data) ---
@@ -508,8 +510,8 @@ const subjectStructureData = [
 
 // Helpers
 function formatNumber(n) { return n ? n.toLocaleString() : '0'; }
-function getPlatformColor(p) { return p === '淘宝' ? 'orange' : p === '抖音' ? 'magenta' : 'cyan'; }
-function getPlatformClass(p) { return p === '淘宝' ? 'bg-orange-100 text-orange-600' : p === '抖音' ? 'bg-pink-100 text-pink-600' : 'bg-cyan-100 text-cyan-600'; }
+function getPlatformColor(p) { return p === '淘宝' ? 'orange' : p === '抖音' ? 'arcoblue' : 'red'; }
+function getPlatformClass(p) { return p === '淘宝' ? 'bg-orange-100 text-orange-600' : p === '抖音' ? 'bg-blue-100 text-blue-600' : 'bg-red-100 text-red-600'; }
 
 // Actions
 const showMetricDetail = (metric) => {
@@ -788,56 +790,110 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-/* Page Layout */
-.page-container {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 24px;
-  background-color: #F7F8FA;
+/* 全局变量与布局 */
+.permission-layout {
   min-height: 100vh;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  color: #1D2129;
+  background-color: var(--color-bg-1);
+  display: flex;
+  flex-direction: column;
 }
 
-/* 顶部栏 */
-.top-bar {
+/* 顶部导航 */
+.header-section {
+  padding: 16px 24px;
+  background-color: #fff;
+  border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
+}
+
+.header-content {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 24px;
+}
+
+.title-group {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.icon-wrapper {
+  width: 48px;
   height: 48px;
-}
-.brand { display: flex; align-items: center; gap: 12px; }
-
-/* 面包屑 */
-.breadcrumb-nav {
+  background: linear-gradient(135deg, #165dff 0%, #3c7eff 100%);
+  border-radius: 12px;
   display: flex;
   align-items: center;
+  justify-content: center;
+  color: #fff;
+  box-shadow: 0 4px 10px rgba(22, 93, 255, 0.2);
+}
+
+.page-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: #1d2129;
+  line-height: 1.4;
+}
+
+.page-subtitle {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: #86909c;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+}
+
+/* 主体布局 */
+.page-body {
+  flex: 1;
+  padding: 16px;
+  background-color: var(--color-fill-2);
+  display: flex;
+  flex-direction: column;
+}
+
+.content-area {
   background: #fff;
-  padding: 6px 16px;
-  border-radius: 20px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.03);
-  border: 1px solid #F2F3F5;
-}
-.crumb-item {
+  border-radius: 8px;
   display: flex;
-  align-items: center;
-  font-size: 14px;
-  color: #86909C;
-  cursor: pointer;
-  transition: color 0.2s;
+  flex-direction: column;
+  padding: 24px;
+  border: 1px solid var(--color-border);
 }
-.crumb-item:hover { color: #165DFF; }
-.crumb-item.active { color: #1D2129; font-weight: 600; cursor: default; }
-.crumb-separator { margin: 0 8px; font-size: 12px; color: #C9CDD4; }
-.crumb-icon { margin-right: 6px; font-size: 16px; }
 
-/* 控制区 */
-.controls { display: flex; gap: 12px; align-items: center; background: #fff; padding: 6px 16px; border-radius: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.03); }
-.filter-pill { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #4E5969; border-right: 1px solid #F2F3F5; padding-right: 12px; margin-right: 4px; }
-.filter-pill:last-child { border-right: none; padding-right: 0; margin-right: 0; }
-.filter-pill .label { color: #86909C; display: flex; align-items: center; gap: 4px; }
-.action-btn { margin-left: 8px; }
+/* Filter Pill */
+.filter-pill { 
+  display: flex; 
+  align-items: center; 
+  gap: 4px; 
+  font-size: 13px; 
+  color: #1D2129; 
+  background-color: #F2F3F5;
+  padding: 2px 12px;
+  border-radius: 16px;
+  transition: all 0.2s;
+}
+.filter-pill:hover {
+  background-color: #E5E6EB;
+}
+.filter-pill .label { 
+  color: #86909C; 
+  margin-right: 4px;
+}
+.filter-pill :deep(.arco-select-view-single) {
+  background-color: transparent;
+  padding-left: 0;
+  padding-right: 0;
+}
+.filter-pill :deep(.arco-select-view-single:hover) {
+  background-color: transparent;
+}
 
 /* 核心指标卡片 */
 .stat-card { background: #fff; padding: 20px; border-radius: 12px; display: flex; align-items: center; gap: 16px; transition: all 0.2s; border: 1px solid transparent; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
@@ -862,8 +918,8 @@ onUnmounted(() => {
 .arrow-icon { color: #C9CDD4; }
 
 .bg-orange-100 { background: #FFF7E8; color: #FF7D00; }
-.bg-pink-100 { background: #FFF0F6; color: #EB2F96; }
-.bg-cyan-100 { background: #E6FFFB; color: #13C2C2; }
+.bg-blue-100 { background: #E8F3FF; color: #165DFF; }
+.bg-red-100 { background: #FFECE8; color: #F53F3F; }
 
 /* 详情页新 UI */
 .detail-metric-card {

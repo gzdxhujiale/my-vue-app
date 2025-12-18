@@ -1,5 +1,6 @@
 <script setup>
   import { ref, computed } from 'vue'
+  import { HistoryIcon } from 'lucide-vue-next'
   import { 
     IconUser, IconApps, IconFilter, IconRefresh, IconRight,
     IconFile, IconCalendar, IconClockCircle
@@ -133,28 +134,30 @@
   </script>
   
   <template>
-    <div class="page-container">
-      <div class="content-wrapper">
-        <!-- Header 区域 -->
-        <header class="page-header">
-          <div class="header-left">
-            <a-typography-title :heading="3" class="main-title">历史记录</a-typography-title>
-            <a-typography-text type="secondary" class="sub-title">查看已归档的任务记录</a-typography-text>
+  <a-layout class="permission-layout">
+    <!-- 顶部通栏 -->
+    <div class="header-section">
+      <div class="header-content">
+        <div class="title-group">
+          <div class="icon-wrapper">
+            <HistoryIcon :size="24" />
           </div>
-          
-          <!-- 统计条 -->
-          <div class="stat-bar">
-            <div class="stat-item">
-              <div class="stat-icon bg-indigo"><IconApps /></div>
-              <div class="stat-info">
-                <span class="stat-label">总记录</span>
-                <span class="stat-value">{{ stats.total }}</span>
-              </div>
-            </div>
+          <div>
+            <h1 class="page-title">历史记录</h1>
+            <p class="page-subtitle">查看已归档的任务记录</p>
           </div>
-        </header>
-  
-        <a-card class="main-card" :bordered="false">
+        </div>
+        <div class="header-actions">
+          <div class="stat-pill">
+            <span class="label">总记录</span>
+            <span class="value">{{ stats.total }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <a-layout class="page-body">
+      <a-layout-content class="content-area custom-scroll">
           <!-- 工具栏 -->
           <div class="toolbar">
             <div class="toolbar-left">
@@ -241,7 +244,7 @@
           <a-table 
             :data="filteredData" 
             :columns="columns" 
-            :pagination="{ pageSize: 12 }"
+            :pagination="{ pageSize: 13 }"
             :bordered="{ cell: true }"
             row-key="id"
             hoverable
@@ -276,7 +279,6 @@
               </a-button>
             </template>
           </a-table>
-        </a-card>
         
         <!-- 详情抽屉 -->
         <a-drawer
@@ -375,353 +377,361 @@
             <a-button @click="closeDrawer">关闭</a-button>
           </template>
         </a-drawer>
-      </div>
-    </div>
-  </template>
+      </a-layout-content>
+    </a-layout>
+  </a-layout>
+</template>
   
   <style scoped>
-  .page-container {
-    min-height: 100vh;
-    background-color: var(--color-fill-2);
-    padding: 32px;
-    box-sizing: border-box;
-  }
-  
-  .content-wrapper {
-    max-width: 1200px;
-    margin: 0 auto;
-  }
-  
-  /* 头部样式 */
-  .page-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-    margin-bottom: 24px;
-    flex-wrap: wrap;
-    gap: 24px;
-  }
-  
-  .main-title {
-    margin: 0 0 8px 0;
-    font-size: 28px;
-    color: var(--color-text-1);
-    letter-spacing: -0.5px;
-  }
-  
-  .sub-title {
-    font-size: 14px;
-    color: var(--color-text-3);
-  }
-  
-  /* 统计条样式 */
-  .stat-bar {
-    display: flex;
-    align-items: center;
-    background: var(--color-bg-2);
-    padding: 12px 24px;
-    border-radius: 12px;
-    border: 1px solid var(--color-border-2);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
-    gap: 24px;
-  }
-  
-  .stat-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    min-width: 100px;
-  }
-  
-  .stat-icon {
-    width: 36px;
-    height: 36px;
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 18px;
-  }
-  .bg-indigo { background-color: rgb(238, 242, 255); color: rgb(79, 70, 229); }
-  
-  .stat-info {
-    display: flex;
-    flex-direction: column;
-  }
-  
-  .stat-label {
-    font-size: 12px;
-    color: var(--color-text-3);
-    line-height: 1.2;
-  }
-  
-  .stat-value {
-    font-size: 18px;
-    font-weight: 700;
-    color: var(--color-text-1);
-    line-height: 1.2;
-  }
-  
-  /* 主卡片与工具栏 */
-  .main-card {
-    border-radius: 8px;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
-  }
-  
-  .toolbar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 16px 0;
-    margin-bottom: 0;
-    flex-wrap: wrap;
-    gap: 16px;
-  }
-  
-  .toolbar-left {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-  
-  .section-title {
-    font-size: 16px;
-    font-weight: 600;
-    color: var(--color-text-1);
-  }
-  
-  .toolbar-right {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-  
-  /* 胶囊筛选器 */
-  .filter-capsule {
-    display: flex;
-    align-items: center;
-    border: 1px solid var(--color-border-2);
-    border-radius: 18px;
-    padding: 1px 8px;
-    background-color: var(--color-bg-1);
-    transition: border-color 0.2s;
-  }
-  
-  .filter-capsule:hover {
-    border-color: var(--color-primary-light-3);
-  }
-  
-  .filter-icon {
-    color: var(--color-text-4);
-    margin-right: 4px;
-    font-size: 12px;
-  }
-  
-  .divider {
-    width: 1px;
-    height: 12px;
-    background-color: var(--color-border-2);
-    margin: 0 2px;
-  }
-  
-  .search-input {
-    width: 240px;
-    background-color: var(--color-fill-2);
-    border-radius: 18px;
-    border: 1px solid transparent;
-  }
-  .search-input:hover {
-    background-color: var(--color-fill-3);
-  }
-  
-  .refresh-btn {
-    border-radius: 50%;
-    width: 32px;
-    height: 32px;
-    padding: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--color-text-3);
-  }
-  
-  /* 表格视觉优化 */
-  .custom-table {
-    margin-top: 12px;
-  }
-  
-  :deep(.arco-table-th) {
-    background-color: var(--color-fill-1);
-    color: var(--color-text-2);
-    font-weight: 600;
-  }
-  
-  :deep(.arco-table-td) {
-    color: var(--color-text-2);
-  }
-  
-  /* 用户列 */
-  .user-cell {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  
-  .user-avatar {
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    background-color: var(--color-fill-3);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--color-text-3);
-  }
-  
-  .user-name {
-    color: var(--color-text-2);
-    font-size: 14px;
-  }
-  
-  /* 状态列 */
-  .status-tag {
-    padding: 4px 10px;
-    border-radius: 99px;
-    font-size: 12px;
-    font-weight: 600;
-    background-color: var(--color-fill-2);
-    color: var(--color-text-3);
-    border: 1px solid var(--color-border-2);
-  }
-  
-  /* 详情按钮 */
-  .action-btn {
-    color: var(--color-text-3);
-  }
-  .action-btn:hover {
-    color: rgb(79, 70, 229);
-    background-color: rgb(238, 242, 255);
-  }
-  
-  /* Drawer 内容 */
-  .drawer-content {
-    padding: 0;
-  }
-  
-  .info-card, .file-card {
-    border-radius: 8px;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.05);
-  }
-  
-  .info-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-  }
-  
-  .icon-header {
-    width: 40px;
-    height: 40px;
-    border-radius: 8px;
-    background-color: var(--color-fill-2);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--color-text-3);
-    font-size: 20px;
-  }
-  
-  .info-list {
-    margin-top: 0;
-  }
-  
-  .info-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 4px 0;
-  }
-  
-  .label {
-    color: var(--color-text-3);
-    font-size: 13px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-  
-  .value {
-    color: var(--color-text-1);
-    font-weight: 500;
-    font-size: 13px;
-  }
-  
-  .value-tag {
-    font-family: monospace;
-    background: var(--color-fill-2);
-    padding: 2px 6px;
-    border-radius: 4px;
-    font-size: 12px;
-  }
-  
-  .file-detail {
-    display: flex;
-    gap: 16px;
-    align-items: center;
-  }
-  
-  .file-icon-box {
-    width: 48px;
-    height: 48px;
-    border-radius: 8px;
-    background-color: rgb(209, 250, 229);
-    color: rgb(5, 150, 105);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-  }
-  
-  .file-info-detail {
-    flex: 1;
-  }
-  
-  .file-name {
-    font-size: 14px;
-    font-weight: bold;
-    color: var(--color-text-1);
-    margin-bottom: 4px;
-  }
-  
-  .file-meta {
-    font-size: 12px;
-    color: var(--color-text-3);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  
-  .dot {
-    width: 4px;
-    height: 4px;
-    background-color: var(--color-neutral-4);
-    border-radius: 50%;
-  }
-  
-  .status-info {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-  }
-  
-  .status-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  
-  .status-label {
-    font-size: 13px;
-    color: var(--color-text-2);
-  }
-  </style>
+/* 全局变量与布局 */
+.permission-layout {
+  min-height: 100vh;
+  background-color: var(--color-bg-1);
+  display: flex;
+  flex-direction: column;
+}
+
+/* 顶部导航 */
+.header-section {
+  padding: 16px 24px;
+  background-color: #fff;
+  border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
+}
+
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.title-group {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.icon-wrapper {
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #165dff 0%, #3c7eff 100%);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  box-shadow: 0 4px 10px rgba(22, 93, 255, 0.2);
+}
+
+.page-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: #1d2129;
+  line-height: 1.4;
+}
+
+.page-subtitle {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: #86909c;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+}
+
+/* Stat Pill in Header */
+.stat-pill {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+.stat-pill .label {
+  font-size: 12px;
+  color: var(--color-text-3);
+}
+.stat-pill .value {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-text-1);
+}
+
+/* 主体布局 */
+.page-body {
+  flex: 1;
+  padding: 16px;
+  background-color: var(--color-fill-2);
+  display: flex;
+  flex-direction: column;
+}
+
+.content-area {
+  background: #fff;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  padding: 24px;
+  border: 1px solid var(--color-border);
+  flex: 1; /* Fill remaining space */
+}
+
+/* Toolbar */
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 16px; /* Adjusted padding */
+  margin-bottom: 0;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.section-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text-1);
+}
+
+.toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* 胶囊筛选器 */
+.filter-capsule {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--color-border-2);
+  border-radius: 18px;
+  padding: 1px 8px;
+  background-color: var(--color-bg-1);
+  transition: border-color 0.2s;
+}
+
+.filter-capsule:hover {
+  border-color: var(--color-primary-light-3);
+}
+
+.filter-icon {
+  color: var(--color-text-4);
+  margin-right: 4px;
+  font-size: 12px;
+}
+
+.divider {
+  width: 1px;
+  height: 12px;
+  background-color: var(--color-border-2);
+  margin: 0 2px;
+}
+
+.search-input {
+  width: 240px;
+  background-color: var(--color-fill-2);
+  border-radius: 18px;
+  border: 1px solid transparent;
+}
+.search-input:hover {
+  background-color: var(--color-fill-3);
+}
+
+.refresh-btn {
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-3);
+}
+
+/* 表格视觉优化 */
+.custom-table {
+  margin-top: 0; /* Removed margin */
+}
+
+:deep(.arco-table-th) {
+  background-color: var(--color-fill-1);
+  color: var(--color-text-2);
+  font-weight: 600;
+}
+
+:deep(.arco-table-td) {
+  color: var(--color-text-2);
+}
+
+/* 用户列 */
+.user-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.user-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background-color: var(--color-fill-3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-3);
+}
+
+.user-name {
+  color: var(--color-text-2);
+  font-size: 14px;
+}
+
+/* 状态列 */
+.status-tag {
+  padding: 4px 10px;
+  border-radius: 99px;
+  font-size: 12px;
+  font-weight: 600;
+  background-color: var(--color-fill-2);
+  color: var(--color-text-3);
+  border: 1px solid var(--color-border-2);
+}
+
+/* 详情按钮 */
+.action-btn {
+  color: var(--color-text-3);
+}
+.action-btn:hover {
+  color: rgb(79, 70, 229);
+  background-color: rgb(238, 242, 255);
+}
+
+/* Drawer 内容 */
+.drawer-content {
+  padding: 0;
+}
+
+.info-card, .file-card {
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+}
+
+.info-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.icon-header {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  background-color: var(--color-fill-2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-3);
+  font-size: 20px;
+}
+
+.info-list {
+  margin-top: 0;
+}
+
+.info-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 0;
+}
+
+.label {
+  color: var(--color-text-3);
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.value {
+  color: var(--color-text-1);
+  font-weight: 500;
+  font-size: 13px;
+}
+
+.value-tag {
+  font-family: monospace;
+  background: var(--color-fill-2);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.file-detail {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.file-icon-box {
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  background-color: rgb(209, 250, 229);
+  color: rgb(5, 150, 105);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.file-info-detail {
+  flex: 1;
+}
+
+.file-name {
+  font-size: 14px;
+  font-weight: bold;
+  color: var(--color-text-1);
+  margin-bottom: 4px;
+}
+
+.file-meta {
+  font-size: 12px;
+  color: var(--color-text-3);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dot {
+  width: 4px;
+  height: 4px;
+  background-color: var(--color-neutral-4);
+  border-radius: 50%;
+}
+
+.status-info {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.status-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.status-label {
+  font-size: 13px;
+  color: var(--color-text-2);
+}
+</style>

@@ -1,91 +1,45 @@
 <template>
   <div class="rbac-container">
     <!-- 1. 顶部导航 -->
-    <div class="page-header">
-      <!-- 已移除面包屑 -->
-      <h1 class="page-title">用户管理</h1>
-      <p class="page-description">
-        配置系统用户，管理账号状态、归属部门及角色权限分配。
-      </p>
-    </div>
-
-    <!-- 2. 数据概览卡片 -->
-    <div class="stats-section">
-      <a-row :gutter="16">
-        <a-col :span="6">
-          <a-card class="stat-card" :bordered="false">
-            <div class="stat-content">
-              <a-statistic
-                title="总用户数"
-                :value="users.length"
-                :value-style="{ fontWeight: 600, fontSize: '24px' }"
-                show-group-separator
-                animation
-              />
-              <div class="stat-icon-bg primary-bg">
-                <icon-user-group size="24" />
-              </div>
-            </div>
-          </a-card>
-        </a-col>
-        <a-col :span="6">
-          <a-card class="stat-card" :bordered="false">
-            <div class="stat-content">
-              <a-statistic
-                title="活跃用户"
-                :value="activeUserCount"
-                :value-style="{ color: '#00b42a', fontWeight: 600, fontSize: '24px' }"
-                animation
-              >
-                <template #prefix>
-                  <icon-arrow-rise />
-                </template>
-              </a-statistic>
-              <div class="stat-icon-bg success-bg">
-                <icon-check-circle size="24" />
-              </div>
-            </div>
-          </a-card>
-        </a-col>
-        <a-col :span="6">
-          <a-card class="stat-card" :bordered="false">
-            <div class="stat-content">
-              <a-statistic
-                title="停用账号"
-                :value="disabledUserCount"
-                :value-style="{ color: '#ff7d00', fontWeight: 600, fontSize: '24px' }"
-                animation
-              />
-              <div class="stat-icon-bg warning-bg">
-                <icon-stop size="24" />
-              </div>
-            </div>
-          </a-card>
-        </a-col>
-        <a-col :span="6">
-          <a-card class="stat-card" :bordered="false">
-            <div class="stat-content">
-              <a-statistic
-                title="本月新增"
-                :value="8"
-                :value-style="{ fontWeight: 600, fontSize: '24px' }"
-                animation
-              >
-                <template #suffix>
-                  <span class="stat-suffix">人</span>
-                </template>
-              </a-statistic>
-              <div class="stat-icon-bg gray-bg">
-                <icon-schedule size="24" />
-              </div>
-            </div>
-          </a-card>
-        </a-col>
-      </a-row>
+    <div class="header-section">
+      <div class="header-content">
+        <div class="title-group">
+          <div class="icon-wrapper">
+            <icon-user-group size="24" />
+          </div>
+          <div>
+            <h1 class="page-title">用户管理</h1>
+            <p class="page-subtitle">配置系统用户，管理账号状态、归属部门及角色权限分配</p>
+          </div>
+        </div>
+        <div class="header-actions">
+           <div class="stat-group">
+             <div class="stat-item">
+               <div class="stat-label">总用户数</div>
+               <div class="stat-value">{{ users.length }}</div>
+             </div>
+             <div class="stat-divider"></div>
+             <div class="stat-item">
+               <div class="stat-label">活跃用户</div>
+               <div class="stat-value text-emerald">{{ activeUserCount }}</div>
+             </div>
+             <div class="stat-divider"></div>
+             <div class="stat-item">
+               <div class="stat-label">停用账号</div>
+               <div class="stat-value text-amber">{{ disabledUserCount }}</div>
+             </div>
+             <div class="stat-divider"></div>
+             <div class="stat-item">
+               <div class="stat-label">本月新增</div>
+               <div class="stat-value text-indigo">8</div>
+             </div>
+           </div>
+        </div>
+      </div>
     </div>
 
     <!-- 3. 主内容区域 -->
-    <a-card class="main-table-card" :bordered="false">
+    <a-card class="main-table-card">
       <!-- 工具栏 -->
       <div class="toolbar">
         <div class="toolbar-left">
@@ -127,21 +81,19 @@
             </a-button>
           </transition>
           
-          <a-button type="primary" @click="openDrawer('add')">
+          <a-button type="text" size="small" @click="openDrawer('add')">
             <template #icon><icon-plus /></template>
             新建用户
           </a-button>
           
-          <a-tooltip content="刷新列表">
-            <a-button class="icon-btn" @click="refreshData">
-              <template #icon><icon-refresh /></template>
-            </a-button>
-          </a-tooltip>
-          <a-tooltip content="导出数据">
-            <a-button class="icon-btn">
-              <template #icon><icon-download /></template>
-            </a-button>
-          </a-tooltip>
+          <a-button type="text" size="small" @click="refreshData">
+            <template #icon><icon-refresh /></template>
+            刷新列表
+          </a-button>
+          <a-button type="text" size="small">
+            <template #icon><icon-download /></template>
+            导出数据
+          </a-button>
         </div>
       </div>
 
@@ -485,64 +437,97 @@ const onPageSizeChange = (size) => {
 <style scoped>
 /* 容器基础样式 */
 .rbac-container {
-  padding: 12px;
-  background-color: #f2f3f5;
+  padding: 12px 24px;
   min-height: 100vh;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background-color: var(--color-fill-2);
 }
 
 /* 顶部区域 */
-.page-header {
-  margin-bottom: 12px;
-}
-.page-title {
-  font-size: 24px;
-  font-weight: 600;
-  color: #1d2129;
-  margin: 0px 0 8px;
-}
-.page-description {
-  color: #86909c;
-  font-size: 14px;
-  max-width: 600px;
+.header-section {
+  margin: -12px -24px 24px -24px;
+  padding: 16px 24px;
+  background-color: #fff;
+  border-bottom: 1px solid var(--color-border);
 }
 
-/* 统计卡片 */
-.stats-section {
-  margin-bottom: 24px;
-}
-.stat-card {
-  border-radius: 8px;
-  transition: all 0.2s;
-}
-.stat-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
-}
-.stat-content {
+.header-content {
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
-.stat-icon-bg {
+
+.title-group {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.icon-wrapper {
   width: 48px;
   height: 48px;
-  border-radius: 8px;
+  background: linear-gradient(135deg, #165dff 0%, #3c7eff 100%);
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-}
-.stat-suffix {
-  font-size: 14px;
-  color: #86909c;
-  margin-left: 4px;
+  color: #fff;
+  box-shadow: 0 4px 10px rgba(22, 93, 255, 0.2);
 }
 
-/* 图标背景色 */
-.primary-bg { background: #e8f3ff; color: #165dff; }
-.success-bg { background: #e8ffea; color: #00b42a; }
-.warning-bg { background: #fff7e8; color: #ff7d00; }
-.gray-bg    { background: #f2f3f5; color: #4e5969; }
+.page-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: #1d2129;
+  line-height: 1.4;
+}
+
+.page-subtitle {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: #86909c;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+}
+
+.stat-group {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: var(--color-text-3);
+  line-height: 1.2;
+}
+
+.stat-value {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-text-1);
+  line-height: 1.2;
+}
+
+.text-amber { color: rgb(217, 119, 6); }
+.text-emerald { color: rgb(5, 150, 105); }
+.text-indigo { color: rgb(79, 70, 229); }
+
+.stat-divider {
+  width: 1px;
+  height: 24px;
+  background-color: var(--color-border-2);
+}
 
 /* 主表格区域 */
 .main-table-card {

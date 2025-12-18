@@ -1,5 +1,6 @@
 <script setup>
   import { reactive, h } from 'vue';
+  import { IconNotification } from '@arco-design/web-vue/es/icon';
   
   // ----------------------------------------------------------------------
   // 图标组件 (使用 h 函数渲染 SVG，避免 JSX 插件依赖)
@@ -74,9 +75,7 @@
       wechatMentionAll: false,
   });
   
-  // ----------------------------------------------------------------------
   // 交互逻辑
-  // ----------------------------------------------------------------------
   const handleSave = () => {
       alert('设置已保存！');
       // 实际项目中这里会调用 API 保存 settings
@@ -89,23 +88,31 @@
   </script>
   
   <template>
-    <div class="page-container animate-fade-in">
-      <!-- 头部 -->
-      <div class="header mb-8 flex justify-between items-end">
-        <div>
-          <h2 class="text-2xl font-bold text-slate-800 flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl bg-orange-100 flex items-center justify-center">
-              <component :is="IconBell" />
-            </div>
-            通知设置
-          </h2>
-          <p class="text-slate-500 text-sm mt-1 ml-13">配置预算预警、数据异常告警及通知渠道</p>
+  <a-layout class="permission-layout">
+    <!-- 顶部通栏 -->
+    <div class="header-section">
+      <div class="header-content">
+        <div class="title-group">
+          <div class="icon-wrapper">
+            <icon-notification size="24" />
+          </div>
+          <div>
+            <h1 class="page-title">通知设置</h1>
+            <p class="page-subtitle">配置预算预警、数据异常告警及通知渠道</p>
+          </div>
         </div>
-        <button @click="handleSave" class="btn-primary flex items-center gap-2">
-          <component :is="IconSave" /> 保存设置
-        </button>
+        <div class="header-actions">
+            <button @click="handleSave" class="btn-primary flex items-center gap-2">
+              <component :is="IconSave" /> 保存设置
+            </button>
+        </div>
       </div>
-  
+    </div>
+
+    <a-layout class="page-body">
+      <a-layout-content class="content-area custom-scroll">
+        <div class="inner-container">
+
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         
         <!-- 1. 预算超支预警 -->
@@ -291,7 +298,7 @@
                 <span class="toggle-slider"></span>
               </label>
             </div>
-  
+
             <button @click="handleTest('wechat')" class="btn-outline-green flex items-center justify-center gap-2">
               <component :is="IconTestTube" /> 发送测试消息
             </button>
@@ -300,8 +307,92 @@
         </div>
   
       </div>
-    </div>
+        </div>
+      </a-layout-content>
+    </a-layout>
+  </a-layout>
   </template>
+  
+  <style scoped>
+  /* 全局变量与布局 (参考 RbacPermission) */
+  .permission-layout {
+    height: 100vh;
+    background-color: var(--color-bg-1);
+    display: flex;
+    flex-direction: column;
+  }
+  
+  /* 顶部导航 */
+  .header-section {
+    padding: 16px 24px;
+    background-color: #fff;
+    border-bottom: 1px solid var(--color-border);
+    flex-shrink: 0;
+  }
+  
+  .header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .title-group {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+  }
+  
+  .icon-wrapper {
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, #ff7d00 0%, #ff9a2e 100%); /* 橙色系 */
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    box-shadow: 0 4px 10px rgba(255, 125, 0, 0.2);
+  }
+  
+  .page-title {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 600;
+    color: #1d2129;
+    line-height: 1.4;
+  }
+  
+  .page-subtitle {
+    margin: 4px 0 0;
+    font-size: 13px;
+    color: #86909c;
+  }
+  
+  /* 主体布局 */
+  .page-body {
+    flex: 1;
+    overflow: hidden;
+    padding: 16px;
+    background-color: var(--color-fill-2);
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .content-area {
+    flex: 1;
+    background: transparent;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .inner-container {
+    padding: 0 8px;
+    height: 100%;
+    overflow-y: auto;
+  }
+  </style>
   
   <style scoped>
   /* 全局基础重置 */
@@ -339,7 +430,7 @@
   /* Card Styles */
   .card {
       background-color: white;
-      border-radius: 2rem; /* rounded-[2rem] */
+      border-radius: 8px;
       box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
       border: 1px solid #f1f5f9; /* border-slate-100 */
       overflow: hidden;
@@ -369,7 +460,7 @@
       align-items: center;
       justify-content: space-between;
       padding: 1rem;
-      border-radius: 0.75rem; /* rounded-xl */
+      border-radius: 6px;
   }
   
   /* Form Elements */
@@ -390,7 +481,7 @@
       width: 100%;
       padding: 0.75rem 1rem;
       border: 1px solid #e2e8f0; /* border-slate-200 */
-      border-radius: 0.75rem; /* rounded-xl */
+      border-radius: 4px;
       font-size: 0.875rem; /* text-sm */
       outline: none;
       transition: box-shadow 0.2s;
@@ -406,7 +497,7 @@
       padding: 0.625rem 1.25rem;
       background-color: #4f46e5; /* bg-indigo-600 */
       color: white;
-      border-radius: 0.75rem; /* rounded-xl */
+      border-radius: 4px;
       font-size: 0.875rem;
       font-weight: 500;
       box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.2);
@@ -421,7 +512,7 @@
       padding: 0.625rem 0;
       border: 1px solid #bfdbfe; /* border-blue-200 */
       color: #2563eb; /* text-blue-600 */
-      border-radius: 0.75rem;
+      border-radius: 4px;
       font-size: 0.875rem;
       font-weight: 500;
       transition: background-color 0.2s;
@@ -435,7 +526,7 @@
       padding: 0.625rem 0;
       border: 1px solid #bbf7d0; /* border-green-200 */
       color: #16a34a; /* text-green-600 */
-      border-radius: 0.75rem;
+      border-radius: 4px;
       font-size: 0.875rem;
       font-weight: 500;
       transition: background-color 0.2s;
@@ -509,7 +600,7 @@
   .ml-auto { margin-left: auto; }
   .w-10 { width: 2.5rem; }
   .h-10 { height: 2.5rem; }
-  .rounded-xl { border-radius: 0.75rem; }
+  .rounded-xl { border-radius: 6px; }
   .flex { display: flex; }
   .items-center { align-items: center; }
   .justify-center { justify-content: center; }

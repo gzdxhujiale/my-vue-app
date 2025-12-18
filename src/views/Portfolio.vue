@@ -17,7 +17,7 @@ const revealedElements = ref(new Set())
 // 作品展示数据
 const showcaseItems = [
   { id: 1, title: '财务数据中心', desc: '数据中台', icon: BarChartBigIcon, color: 'indigo', category: 'b-side', path: '/finance' },
-  { id: 2, title: 'AI智能助手', desc: 'RPA自动化', icon: BotIcon, color: 'emerald', category: 'ai', path: null },
+  { id: 2, title: 'AI智能助手', desc: 'AI Agent搭建', icon: BotIcon, color: 'emerald', category: 'ai', path: null },
   { id: 3, title: '思维导图软件', desc: '效率工具', icon: GitForkIcon, color: 'amber', category: 'tools', path: null },
   { id: 4, title: '窗口控制器', desc: '交互组件', icon: AppWindowIcon, color: 'purple', category: 'tools', path: null },
   { id: 5, title: '文档编辑器', desc: 'AI写作', icon: FileEditIcon, color: 'rose', category: 'tools', path: null }
@@ -225,7 +225,7 @@ onMounted(() => {
       <!-- 作品展示 -->
       <section id="showcase" class="showcase-section reveal" data-reveal-id="showcase">
         <div class="section-header">
-          <h2><LayoutGridIcon :size="20" /> 精选作品集</h2>
+          <h2><LayoutGridIcon :size="20" /> 作品集</h2> 
           <div class="filter-tabs">
             <button 
               v-for="tab in [{ key: 'all', label: '全部' }, { key: 'b-side', label: 'B端/数据' }, { key: 'ai', label: 'AI应用' }, { key: 'tools', label: '效率工具' }]"

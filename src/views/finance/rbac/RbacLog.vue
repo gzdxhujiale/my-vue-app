@@ -13,46 +13,28 @@
           </div>
         </div>
         <div class="header-actions">
-          <a-space>
-            <a-button @click="refreshData">
-              <template #icon><icon-refresh /></template>
-              刷新
-            </a-button>
-            <a-button type="primary" status="success" @click="handleExport">
-              <template #icon><icon-download /></template>
-              导出报表
-            </a-button>
-          </a-space>
+          <div class="stat-group">
+            <div class="stat-item">
+              <div class="stat-label">总日志数</div>
+              <div class="stat-value">{{ statsData[0].value }}</div>
+            </div>
+            <div class="stat-divider"></div>
+            <div class="stat-item">
+              <div class="stat-label">敏感操作</div>
+              <div class="stat-value text-amber">{{ statsData[1].value }}</div>
+            </div>
+            <div class="stat-divider"></div>
+            <div class="stat-item">
+              <div class="stat-label">失败记录</div>
+              <div class="stat-value text-red">{{ statsData[2].value }}</div>
+            </div>
+          </div>
         </div>
       </div>
-
-      <!-- 数据统计卡片 -->
-      <a-grid :cols="{ xs: 1, sm: 2, md: 5 }" :col-gap="16" :row-gap="16" class="stats-grid">
-        <a-grid-item v-for="(stat, index) in statsData" :key="index">
-          <a-card class="stat-card" :bordered="false" hoverable>
-            <div class="stat-inner">
-              <div class="stat-icon" :class="stat.colorClass">
-                <component :is="stat.icon" />
-              </div>
-              <div class="stat-info">
-                <div class="stat-label">{{ stat.label }}</div>
-                <div class="stat-value">
-                  <a-statistic 
-                    :value="stat.value" 
-                    :value-from="0" 
-                    animation 
-                    :value-style="{ fontSize: '24px', fontWeight: '600' }"
-                  />
-                </div>
-              </div>
-            </div>
-          </a-card>
-        </a-grid-item>
-      </a-grid>
     </div>
 
     <!-- 主体内容区域 -->
-    <a-card class="main-table-card" :bordered="false">
+    <a-card class="main-table-card">
       <!-- 筛选区域 -->
       <div class="filter-container">
         <a-row :gutter="24" align="center">
@@ -98,10 +80,16 @@
             </a-select>
           </a-col>
           <a-col :span="6" style="text-align: right;">
-            <a-button type="text" @click="resetQuery" size="small">
-              <template #icon><icon-loop /></template>
-              重置筛选
-            </a-button>
+            <a-space>
+              <a-button type="text" @click="resetQuery" size="small">
+                <template #icon><icon-loop /></template>
+                重置刷新
+              </a-button>
+              <a-button type="text" size="small" @click="handleExport">
+                <template #icon><icon-download /></template>
+                导出报表
+              </a-button>
+            </a-space>
           </a-col>
         </a-row>
       </div>
@@ -363,14 +351,11 @@ const tableData = computed(() => {
 // 统计数据
 const statsData = computed(() => {
   const list = allLogs.value;
-  const today = new Date().toLocaleDateString('zh-CN'); // 简单日期匹配
   
   return [
-    { label: '总日志数', value: list.length, icon: 'IconFile', colorClass: 'blue-bg' },
-    { label: '今日新增', value: list.filter(i => i.time.includes(today)).length, icon: 'IconPlus', colorClass: 'green-bg' },
-    { label: '敏感操作', value: list.filter(i => ['delete', 'update'].includes(i.type)).length, icon: 'IconEdit', colorClass: 'orange-bg' },
-    { label: '失败记录', value: list.filter(i => i.status === '失败').length, icon: 'IconClose', colorClass: 'red-bg' },
-    { label: '活跃用户', value: new Set(list.map(i => i.user)).size, icon: 'IconSafe', colorClass: 'purple-bg' },
+    { title: '总日志数', value: list.length },
+    { title: '敏感操作', value: list.filter(i => ['delete', 'update'].includes(i.type)).length },
+    { title: '失败记录', value: list.filter(i => i.status === '失败').length },
   ];
 });
 
@@ -466,25 +451,28 @@ const mockJson = (log) => {
 <style scoped>
 .rbac-container {
   min-height: 100vh;
-  background-color: #f2f3f5;
-  padding: 24px;
+  padding: 12px 24px;
+  background-color: var(--color-fill-2);
 }
 
 /* 头部样式 */
 .header-section {
-  margin-bottom: 24px;
+  margin: -12px -24px 24px -24px;
+  padding: 16px 24px;
+  background-color: #fff;
+  border-bottom: 1px solid var(--color-border);
 }
 
 .header-content {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 24px;
+  align-items: center;
 }
 
 .title-group {
   display: flex;
   gap: 16px;
+  align-items: center;
 }
 
 .icon-wrapper {
@@ -513,49 +501,43 @@ const mockJson = (log) => {
   color: #86909c;
 }
 
-/* 统计卡片 */
-.stat-card {
-  border-radius: 8px;
-  transition: all 0.3s;
-  overflow: hidden;
+.header-actions {
+  display: flex;
+  align-items: center;
 }
 
-.stat-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 16px -4px rgba(0, 0, 0, 0.08);
-}
-
-.stat-inner {
+.stat-group {
   display: flex;
   align-items: center;
   gap: 16px;
 }
 
-.stat-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
+.stat-item {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 20px;
-}
-
-/* 统计图标背景色 */
-.blue-bg { background-color: #e8f3ff; color: #165dff; }
-.green-bg { background-color: #e8ffea; color: #00b42a; }
-.orange-bg { background-color: #fff7e8; color: #ff7d00; }
-.red-bg { background-color: #ffece8; color: #f53f3f; }
-.purple-bg { background-color: #f5e8ff; color: #722ed1; }
-
-.stat-info {
-  flex: 1;
+  flex-direction: column;
+  align-items: flex-end;
 }
 
 .stat-label {
   font-size: 12px;
-  color: #86909c;
-  margin-bottom: 2px;
+  color: var(--color-text-3);
+  line-height: 1.2;
+}
+
+.stat-value {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-text-1);
+  line-height: 1.2;
+}
+
+.text-amber { color: rgb(217, 119, 6); }
+.text-red { color: rgb(220, 38, 38); }
+
+.stat-divider {
+  width: 1px;
+  height: 24px;
+  background-color: var(--color-border-2);
 }
 
 /* 主卡片与表格 */

@@ -1,53 +1,60 @@
 <script setup>
-import { BarChart3Icon } from 'lucide-vue-next'
+import { ConstructionIcon } from 'lucide-vue-next'
 </script>
 
 <template>
   <div class="page-container">
-    <div class="page-header">
-      <div class="page-title">
-        <BarChart3Icon :size="24" class="title-icon" />
-        <div>
-          <h1>对比分析</h1>
-          <p>多维度数据对比分析</p>
-        </div>
+    <div class="maintenance-wrapper">
+      <div class="maintenance-card">
+        <ConstructionIcon :size="64" class="maintenance-icon" />
+        <h2 class="maintenance-title">功能维护中</h2>
+        <p class="maintenance-desc">该功能正在开发完善中，敬请期待</p>
       </div>
     </div>
-    <t-card class="content-card">
-      <div class="compare-section">
-        <t-row :gutter="16">
-          <t-col :span="6">
-            <t-select placeholder="选择对比维度" style="width: 100%">
-              <t-option value="store" label="按店铺" />
-              <t-option value="time" label="按时间" />
-              <t-option value="product" label="按产品" />
-            </t-select>
-          </t-col>
-          <t-col :span="6">
-            <t-date-range-picker style="width: 100%" />
-          </t-col>
-          <t-col :span="4">
-            <t-button theme="primary" block>开始对比</t-button>
-          </t-col>
-        </t-row>
-      </div>
-      <div class="chart-placeholder">
-        <BarChart3Icon :size="48" />
-        <p>对比图表区域</p>
-      </div>
-    </t-card>
   </div>
 </template>
 
 <style scoped>
-.page-container { max-width: 1200px; }
-.page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
-.page-title { display: flex; align-items: center; gap: 1rem; }
-.title-icon { color: #4f46e5; }
-.page-title h1 { font-size: 1.5rem; font-weight: 700; color: #1e293b; margin: 0; }
-.page-title p { font-size: 0.875rem; color: #64748b; margin: 0.25rem 0 0; }
-.content-card { border-radius: 0.75rem !important; }
-.compare-section { margin-bottom: 1.5rem; }
-.chart-placeholder { height: 300px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #94a3b8; background: #f8fafc; border-radius: 0.5rem; }
-.chart-placeholder p { margin-top: 1rem; font-size: 0.875rem; }
+.page-container { 
+  max-width: 1200px; 
+  margin: 0 auto;
+  padding: 24px;
+  min-height: 70vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.maintenance-wrapper {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.maintenance-card {
+  text-align: center;
+  padding: 60px 40px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  max-width: 500px;
+}
+
+.maintenance-icon {
+  color: #FF7D00;
+  margin-bottom: 24px;
+}
+
+.maintenance-title {
+  font-size: 24px;
+  font-weight: 600;
+  color: #1D2129;
+  margin: 0 0 12px 0;
+}
+
+.maintenance-desc {
+  font-size: 14px;
+  color: #86909C;
+  margin: 0;
+}
 </style>

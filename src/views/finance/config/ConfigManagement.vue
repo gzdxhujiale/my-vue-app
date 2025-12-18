@@ -1,5 +1,6 @@
 <script setup>
   import { ref, reactive, computed, watch, nextTick, h } from 'vue';
+  import { IconSettings } from '@arco-design/web-vue/es/icon';
   
   // ----------------------------------------------------------------------
   // 图标组件 (使用 Vue 渲染函数 h() 代替 JSX 以避免编译器报错)
@@ -352,43 +353,58 @@
   </script>
   
   <template>
-    <div class="page-container animate-fade-in">
-      <!-- Header -->
-      <div class="header mb-8 flex justify-between items-end">
-        <div>
-          <h2 class="text-2xl font-bold text-slate-800">配置管理</h2>
-          <p class="text-slate-500 text-sm mt-1">集中管理系统维度数据与业务规则映射</p>
+  <a-layout class="permission-layout">
+    <!-- 顶部通栏 -->
+    <div class="header-section">
+      <div class="header-content">
+        <div class="title-group">
+          <div class="icon-wrapper">
+            <icon-settings size="24" />
+          </div>
+          <div>
+            <h1 class="page-title">配置管理</h1>
+            <p class="page-subtitle">集中管理系统维度数据与业务规则映射</p>
+          </div>
         </div>
-        <button @click="openModal('add')" class="add-btn px-5 py-2.5 bg-indigo-600 text-white rounded-xl shadow-lg hover:bg-indigo-700 transition-all flex items-center gap-2 text-sm font-medium">
-          <component :is="IconPlus" /> 新增配置
-        </button>
+        <div class="header-actions">
+            <button @click="openModal('add')" class="btn-primary flex items-center gap-2">
+              <component :is="IconPlus" /> 新增配置
+            </button>
+        </div>
       </div>
-  
+    </div>
+
+    <a-layout class="page-body">
+      <a-layout-content class="content-area custom-scroll">
+        <div class="inner-container">
+      
       <!-- Main Tabs -->
-      <div class="flex border-b border-slate-200 mb-6">
-        <button 
-          @click="activeTab = 'dimension'" 
-          class="main-tab-btn" 
-          :class="activeTab === 'dimension' ? 'active-tab' : 'inactive-tab'"
-        >维度数据管理</button>
-        <button 
-          @click="activeTab = 'online'" 
-          class="main-tab-btn" 
-          :class="activeTab === 'online' ? 'active-tab' : 'inactive-tab'"
-        >线上账单配置</button>
-        <button 
-          @click="activeTab = 'offline'" 
-          class="main-tab-btn" 
-          :class="activeTab === 'offline' ? 'active-tab' : 'inactive-tab'"
-        >线下账单配置</button>
+      <div class="mb-6">
+        <div class="inline-flex bg-slate-100 p-1 rounded-lg">
+          <button 
+            @click="activeTab = 'dimension'" 
+            class="main-tab-btn" 
+            :class="activeTab === 'dimension' ? 'active-tab' : 'inactive-tab'"
+          >维度数据管理</button>
+          <button 
+            @click="activeTab = 'online'" 
+            class="main-tab-btn" 
+            :class="activeTab === 'online' ? 'active-tab' : 'inactive-tab'"
+          >线上账单配置</button>
+          <button 
+            @click="activeTab = 'offline'" 
+            class="main-tab-btn" 
+            :class="activeTab === 'offline' ? 'active-tab' : 'inactive-tab'"
+          >线下账单配置</button>
+        </div>
       </div>
   
       <!-- Content Area -->
-      <div class="bg-white rounded-[2rem] shadow-sm border border-slate-100 overflow-hidden min-h-[600px] flex flex-col">
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden min-h-[730px] flex flex-col">
           
           <!-- 1. Dimension Data Management -->
           <div v-if="activeTab === 'dimension'" class="flex flex-col h-full">
-              <div class="flex border-b border-slate-100 px-6 gap-2 bg-slate-50 overflow-x-auto">
+              <div class="flex border-b border-slate-100 px-6 gap-6 bg-white overflow-x-auto">
                   <button 
                       v-for="key in ['customer', 'platform', 'store', 'department', 'employee', 'product', 'subject']" 
                       :key="key"
@@ -502,7 +518,7 @@
   
           <!-- 2. Online Bill Config -->
           <div v-if="activeTab === 'online'" class="flex flex-col h-full animate-fade-in">
-               <div class="flex border-b border-slate-100 px-6 gap-8 bg-slate-50">
+               <div class="flex border-b border-slate-100 px-6 gap-6 bg-white">
                   <button 
                       @click="onlineSubTab = 'mapping'"
                       class="sub-tab-btn"
@@ -571,7 +587,7 @@
   
           <!-- 3. Offline Bill Config -->
           <div v-if="activeTab === 'offline'" class="flex flex-col h-full animate-fade-in">
-              <div class="flex border-b border-slate-100 px-6 gap-8 bg-slate-50">
+              <div class="flex border-b border-slate-100 px-6 gap-6 bg-white">
                   <button @click="offlineSubTab = 'main'" class="sub-tab-btn" :class="offlineSubTab === 'main' ? 'sub-tab-active' : 'sub-tab-inactive'">主流程规则表</button>
                   <button @click="offlineSubTab = 'field'" class="sub-tab-btn" :class="offlineSubTab === 'field' ? 'sub-tab-active' : 'sub-tab-inactive'">字段映射表</button>
                   <button @click="offlineSubTab = 'subject'" class="sub-tab-btn" :class="offlineSubTab === 'subject' ? 'sub-tab-active' : 'sub-tab-inactive'">科目映射表</button>
@@ -689,10 +705,92 @@
               </div>
           </div>
       </div>
-    </div>
+      </div>
+      </a-layout-content>
+    </a-layout>
+  </a-layout>
   </template>
   
   <style scoped>
+  /* 全局变量与布局 (参考 RbacPermission) */
+  .permission-layout {
+    height: 100vh;
+    background-color: var(--color-bg-1);
+    display: flex;
+    flex-direction: column;
+  }
+  
+  /* 顶部导航 */
+  .header-section {
+    padding: 16px 24px;
+    background-color: #fff;
+    border-bottom: 1px solid var(--color-border);
+    flex-shrink: 0;
+  }
+  
+  .header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .title-group {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+  }
+  
+  .icon-wrapper {
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, #165dff 0%, #3c7eff 100%); /* 蓝色系 */
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    box-shadow: 0 4px 10px rgba(22, 93, 255, 0.2);
+  }
+  
+  .page-title {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 600;
+    color: #1d2129;
+    line-height: 1.4;
+  }
+  
+  .page-subtitle {
+    margin: 4px 0 0;
+    font-size: 13px;
+    color: #86909c;
+  }
+  
+  /* 主体布局 */
+  .page-body {
+    flex: 1;
+    overflow: hidden;
+    padding: 16px;
+    background-color: var(--color-fill-2);
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .content-area {
+    flex: 1;
+    background: transparent;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .inner-container {
+    padding: 0 8px;
+    height: 100%;
+    overflow-y: auto;
+  }
+
   /* 全局盒模型重置 */
   * {
       box-sizing: border-box;
@@ -786,45 +884,64 @@
   
   /* Main Tabs */
   .main-tab-btn {
-      padding: 1rem 1.5rem;
+      padding: 0.5rem 1rem;
+      border-radius: 0.375rem;
       font-size: 0.875rem;
       font-weight: 500;
       transition: all 0.2s;
-      border-bottom: 2px solid transparent;
+      border: none;
   }
   .active-tab {
-      border-bottom-color: #4f46e5;
+      background-color: white;
       color: #4f46e5;
-      font-weight: 600;
+      box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   }
   .inactive-tab {
       color: #64748b;
+      background-color: transparent;
   }
   .inactive-tab:hover {
       color: #334155;
+      background-color: rgba(255,255,255,0.5);
+  }
+
+  /* Buttons */
+  .btn-primary {
+      padding: 0.625rem 1.25rem;
+      background-color: #4f46e5; /* bg-indigo-600 */
+      color: white;
+      border-radius: 4px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.2);
+      transition: all 0.2s;
+  }
+  .btn-primary:hover {
+      background-color: #4338ca;
   }
   
   /* Sub Tabs */
   .sub-tab-btn {
-      padding: 0.75rem 1rem;
+      padding: 1rem 0.5rem;
+      margin-bottom: -1px;
       font-size: 0.875rem;
       font-weight: 500;
       transition: all 0.2s;
       white-space: nowrap;
-      border-bottom-width: 2px;
+      border-bottom: 2px solid transparent;
+      background-color: transparent;
   }
   .sub-tab-active {
       color: #4f46e5;
-      border-color: #4f46e5;
-      background-color: rgba(238, 242, 255, 0.5);
+      border-bottom-color: #4f46e5;
+      background-color: transparent;
   }
   .sub-tab-inactive {
       color: #64748b;
       border-color: transparent;
   }
   .sub-tab-inactive:hover {
-      color: #334155;
-      background-color: #f8fafc;
+      color: #4f46e5;
   }
   
   /* Table */

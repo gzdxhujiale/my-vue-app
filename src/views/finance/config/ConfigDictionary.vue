@@ -1,5 +1,6 @@
 <script setup>
   import { ref, computed } from 'vue';
+  import { BookIcon } from 'lucide-vue-next';
   
   // ----------------------------------------------------------------------
   // 数据常量 (保持原始数据结构 1:1)
@@ -384,52 +385,56 @@
   </script>
   
   <template>
-    <!-- 外层容器 -->
-    <div class="page-container animate-fade-in">
-      <!-- 头部 Header -->
-      <div class="header mb-8">
-        <h2 class="title text-2xl font-bold flex items-center gap-3">
-          <div class="icon-box w-10 h-10 rounded-xl flex items-center justify-center bg-violet-100">
-              <!-- Icon Book -->
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-violet-600">
-                  <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/>
-              </svg>
+  <a-layout class="permission-layout">
+    <!-- 顶部通栏 -->
+    <div class="header-section">
+      <div class="header-content">
+        <div class="title-group">
+          <div class="icon-wrapper">
+            <BookIcon :size="24" />
           </div>
-          数据字典与文档
-        </h2>
-        <p class="subtitle text-sm mt-1 ml-13">指标口径说明、帮助文档、使用教程</p>
+          <div>
+            <h1 class="page-title">数据字典与文档</h1>
+            <p class="page-subtitle">指标口径说明、帮助文档、使用教程</p>
+          </div>
+        </div>
       </div>
-  
-      <!-- 标签页切换 Tabs -->
-      <div class="tabs flex gap-4 mb-6">
-        <button 
-          @click="activeTab = 'metrics'" 
-          class="tab-btn px-6 py-3 rounded-xl font-medium transition-all flex items-center gap-2"
-          :class="activeTab === 'metrics' ? 'active-tab shadow-lg' : 'inactive-tab'"
-        >
-          <!-- Icon Calculator -->
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <rect width="16" height="20" x="4" y="2" rx="2"/><line x1="8" x2="16" y1="6" y2="6"/><line x1="16" x2="16" y1="14" y2="18"/><path d="M16 10h.01"/><path d="M12 10h.01"/><path d="M8 10h.01"/><path d="M12 14h.01"/><path d="M8 14h.01"/><path d="M12 18h.01"/><path d="M8 18h.01"/>
-          </svg>
-          指标口径
-        </button>
-        <button 
-          @click="activeTab = 'docs'" 
-          class="tab-btn px-6 py-3 rounded-xl font-medium transition-all flex items-center gap-2"
-          :class="activeTab === 'docs' ? 'active-tab shadow-lg' : 'inactive-tab'"
-        >
-          <!-- Icon HelpCircle -->
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/>
-          </svg>
-          帮助文档
-        </button>
+    </div>
+
+    <a-layout class="page-body">
+      <a-layout-content class="content-area custom-scroll">
+        <div class="inner-container">
+      
+      <!-- 标签页切换 Tabs (Segmented Control Style) -->
+      <div class="mb-6">
+        <div class="inline-flex bg-slate-100 p-1 rounded-lg">
+          <button 
+            @click="activeTab = 'metrics'" 
+            class="main-tab-btn"
+            :class="activeTab === 'metrics' ? 'active-tab' : 'inactive-tab'"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect width="16" height="20" x="4" y="2" rx="2"/><line x1="8" x2="16" y1="6" y2="6"/><line x1="16" x2="16" y1="14" y2="18"/><path d="M16 10h.01"/><path d="M12 10h.01"/><path d="M8 10h.01"/><path d="M12 14h.01"/><path d="M8 14h.01"/><path d="M12 18h.01"/><path d="M8 18h.01"/>
+            </svg>
+            指标口径
+          </button>
+          <button 
+            @click="activeTab = 'docs'" 
+            class="main-tab-btn"
+            :class="activeTab === 'docs' ? 'active-tab' : 'inactive-tab'"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/>
+            </svg>
+            帮助文档
+          </button>
+        </div>
       </div>
   
       <!-- 指标口径内容 -->
       <div v-if="activeTab === 'metrics'" class="grid grid-cols-12 gap-6">
           <!-- 左侧导航 -->
-          <div class="col-span-3 card rounded-2xl shadow-sm border border-slate-100 overflow-hidden bg-white">
+          <div class="col-span-3 card rounded-xl shadow-sm border border-slate-200 overflow-hidden bg-white">
               <div class="p-4 border-b border-slate-100">
                   <div class="relative">
                       <!-- Icon Search -->
@@ -477,10 +482,10 @@
           </div>
   
           <!-- 右侧详情 -->
-          <div class="col-span-9 card rounded-2xl shadow-sm border border-slate-100 overflow-hidden bg-white">
+          <div class="col-span-9 card rounded-xl shadow-sm border border-slate-200 overflow-hidden bg-white">
               <div v-if="selectedMetric" class="p-8 animate-fade-in">
                   <div class="flex items-center gap-4 mb-6">
-                      <div class="w-14 h-14 rounded-2xl bg-indigo-100 flex items-center justify-center">
+                      <div class="w-14 h-14 rounded-xl bg-indigo-100 flex items-center justify-center">
                           <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-indigo-600">
                               <rect width="16" height="20" x="4" y="2" rx="2"/><line x1="8" x2="16" y1="6" y2="6"/><line x1="16" x2="16" y1="14" y2="18"/><path d="M16 10h.01"/><path d="M12 10h.01"/><path d="M8 10h.01"/><path d="M12 14h.01"/><path d="M8 14h.01"/><path d="M12 18h.01"/><path d="M8 18h.01"/>
                           </svg>
@@ -523,7 +528,7 @@
   
       <!-- 帮助文档内容 -->
       <div v-if="activeTab === 'docs'" class="flex flex-col gap-10">
-          <div v-for="cat in docCategories" :key="cat" class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+          <div v-for="cat in docCategories" :key="cat" class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
               <div class="p-6 border-b border-slate-100">
                   <h3 class="font-bold text-slate-800">{{ cat }}</h3>
               </div>
@@ -549,7 +554,7 @@
           </div>
   
           <!-- 视频教程区域 -->
-          <div class="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl p-8 text-white">
+          <div class="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl p-8 text-white">
               <div class="flex items-center gap-4 mb-6">
                   <!-- Icon PlayCircle -->
                   <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -580,7 +585,7 @@
           class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900 bg-opacity-40 backdrop-blur-sm animate-fade-in" 
           @click.self="selectedDoc = null"
       >
-          <div class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[85vh] overflow-hidden flex flex-col">
+          <div class="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[85vh] overflow-hidden flex flex-col">
               <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-gradient-to-r from-indigo-50 to-purple-50">
                   <div class="flex items-center gap-4">
                       <div class="text-4xl">{{ selectedDoc.icon }}</div>
@@ -618,9 +623,91 @@
           </div>
       </div>
     </div>
+      </a-layout-content>
+    </a-layout>
+  </a-layout>
   </template>
   
   <style scoped>
+  /* 全局变量与布局 (参考 RbacPermission) */
+  .permission-layout {
+    height: 100vh;
+    background-color: var(--color-bg-1);
+    display: flex;
+    flex-direction: column;
+  }
+  
+  /* 顶部导航 */
+  .header-section {
+    padding: 16px 24px;
+    background-color: #fff;
+    border-bottom: 1px solid var(--color-border);
+    flex-shrink: 0;
+  }
+  
+  .header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .title-group {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+  }
+  
+  .icon-wrapper {
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, #722ed1 0%, #b37feb 100%); /* 紫色系 */
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    box-shadow: 0 4px 10px rgba(114, 46, 209, 0.2);
+  }
+  
+  .page-title {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 600;
+    color: #1d2129;
+    line-height: 1.4;
+  }
+  
+  .page-subtitle {
+    margin: 4px 0 0;
+    font-size: 13px;
+    color: #86909c;
+  }
+  
+  /* 主体布局 */
+  .page-body {
+    flex: 1;
+    overflow: hidden;
+    padding: 16px;
+    background-color: var(--color-fill-2);
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .content-area {
+    flex: 1;
+    background: transparent; /* 内部卡片自带背景，这里透明 */
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .inner-container {
+    padding: 0 8px;
+    height: 100%;
+    overflow-y: auto;
+  }
+  
   /* 全局盒模型重置 (关键点：防止在非Tailwind项目中布局崩坏)
   */
   * {
@@ -785,20 +872,32 @@
   }
   
   /* 组件特定样式 */
-  .active-tab {
-      background-color: #4f46e5;
-      color: white;
-      box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.4);
+  /* Main Tabs */
+  .main-tab-btn {
+      padding: 0.5rem 1rem;
+      border-radius: 0.375rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: all 0.2s;
+      border: none;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
   }
-  
-  .inactive-tab {
+  .active-tab {
       background-color: white;
-      color: #475569;
-      border: 1px solid #e2e8f0;
+      color: #4f46e5;
+      box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  }
+  .inactive-tab {
+      color: #64748b;
+      background-color: transparent;
   }
   .inactive-tab:hover {
-      background-color: #f8fafc;
+      color: #334155;
+      background-color: rgba(255,255,255,0.5);
   }
+
   
   /* 弹窗样式 */
   .fixed { position: fixed; }

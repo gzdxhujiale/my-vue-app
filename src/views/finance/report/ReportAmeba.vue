@@ -1,6 +1,7 @@
 <script setup>
   import { ref, computed, nextTick, onMounted, onUnmounted, h, watch } from 'vue';
   import * as echarts from 'echarts';
+  import { PieChartIcon } from 'lucide-vue-next';
   // 引入 Arco Design 图标 (仅使用已验证存在的图标)
   import {
     IconUser,
@@ -11,6 +12,7 @@
     IconCaretDown,  // 替代下降趋势
     IconDownload,
     IconRight,
+    IconLeft,
     IconHome,
     IconPrinter,
     IconExport,
@@ -406,59 +408,53 @@
   </script>
   
   <template>
-    <div class="page-container">
-      
-      <!-- 顶部导航与筛选区 (仿 ReportStore 样式) -->
-      <div class="top-bar">
-        <div class="brand">
-          <!-- 面包屑导航 -->
-          <div class="breadcrumb-nav">
-             <div 
-               v-for="(item, index) in viewPath" 
-               :key="index"
-               class="crumb-item"
-               :class="{ active: index === viewPath.length - 1 }"
-               @click="navigateTo(index)"
-             >
-               <icon-apps v-if="item.id === 'root'" class="crumb-icon" />
-               <span class="crumb-text">{{ item.name }}</span>
-               <icon-right v-if="index < viewPath.length - 1" class="crumb-separator" />
-             </div>
+  <a-layout class="permission-layout">
+    <!-- 顶部通栏 -->
+    <div class="header-section">
+      <div class="header-content">
+        <div class="title-group">
+          <div class="icon-wrapper">
+            <PieChartIcon :size="24" />
+          </div>
+          <div>
+            <h1 class="page-title">阿米巴经营核算</h1>
+            <p class="page-subtitle">Departmental Profit & Loss</p>
           </div>
         </div>
-        
-        <!-- 右侧控制区 -->
-        <div class="controls">
-          <div class="filter-pill">
-            <span class="label">年份</span>
-            <a-select v-model="selectedYear" :style="{width:'80px'}" size="small" :bordered="false">
-              <a-option value="2025">2025</a-option>
-              <a-option value="2024">2024</a-option>
-            </a-select>
-          </div>
-          <div class="filter-pill">
-            <span class="label">期间</span>
-            <a-select v-model="selectedMonth" :style="{width:'90px'}" size="small" :bordered="false">
-              <a-option value="all">全年</a-option>
-              <a-option v-for="m in 12" :key="m" :value="m">{{ m }}月</a-option>
-            </a-select>
-          </div>
-           <a-button v-if="selectedAmeba" size="small" type="outline" class="action-btn">
-              <template #icon><icon-download /></template> 导出报表
-           </a-button>
+        <div class="header-actions">
+          <a-space>
+            <a-button v-if="selectedAmeba" @click="goBack" size="small">
+               <template #icon><icon-left /></template> 返回列表
+            </a-button>
+            <div class="filter-pill">
+              <span class="label">年份</span>
+              <a-select v-model="selectedYear" :style="{width:'80px'}" size="small" :bordered="false">
+                <a-option value="2025">2025</a-option>
+                <a-option value="2024">2024</a-option>
+              </a-select>
+            </div>
+            <div class="filter-pill">
+              <span class="label">期间</span>
+              <a-select v-model="selectedMonth" :style="{width:'100px'}" size="small" :bordered="false">
+                <a-option value="all">全年</a-option>
+                <a-option v-for="m in 12" :key="m" :value="m">{{ m }}月</a-option>
+              </a-select>
+            </div>
+          </a-space>
         </div>
       </div>
-  
-      <!-- 主内容区域 -->
-      <div class="content-wrapper">
+    </div>
+
+    <a-layout class="page-body">
+      <a-layout-content class="content-area custom-scroll">
         
         <!-- 视图切换 -->
         <transition name="fade" mode="out-in">
           
           <!-- 1. 仪表盘视图 -->
-          <div v-if="!selectedAmeba" key="dashboard" class="space-y-6">
+          <div v-if="!selectedAmeba" key="dashboard" class="flex flex-col gap-4">
             
-            <!-- KPI 卡片 (仿 Store stat-card 样式) -->
+            <!-- KPI 卡片  -->
             <a-grid :cols="{ xs: 1, sm: 2, md: 3 }" :col-gap="16" :row-gap="16">
               <a-grid-item v-for="metric in metricCards" :key="metric.key">
                 <div class="stat-card clickable" :class="metric.bgClass">
@@ -525,7 +521,7 @@
           <!-- 2. 详情视图 -->
           <div v-else key="detail">
             
-            <!-- 详情页头部：使用 Arco 的 PageHeader -->
+            <!-- 详情页头部 -->
             <div class="bg-white border-b border-gray-200">
               <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <a-page-header
@@ -535,10 +531,9 @@
                   class="px-0 py-2"
                 >
                   <template #extra>
-                    <a-space>
-                      <a-button type="outline" size="small"><template #icon><icon-printer /></template> 打印</a-button>
-                      <a-button type="primary" size="small"><template #icon><icon-export /></template> 导出报表</a-button>
-                    </a-space>
+                     <a-button size="small" type="outline">
+                        <template #icon><icon-download /></template> 导出
+                     </a-button>
                   </template>
                   <template #default>
                     <a-descriptions :column="{ xs: 1, md: 3, lg: 4 }" size="small" class="mt-2">
@@ -662,114 +657,169 @@
           </a-table>
         </a-modal>
   
-      </div>
-    </div>
-  </template>
+      </a-layout-content>
+    </a-layout>
+  </a-layout>
+</template>
   
   <style scoped>
-  /* Page Layout */
-  .page-container {
-    max-width: 1400px;
-    margin: 0 auto;
-    padding: 24px;
-    background-color: #F7F8FA;
-    min-height: 100vh;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    color: #1D2129;
-  }
-  
-  /* 顶部栏 */
-  .top-bar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 24px;
-    height: 48px;
-  }
-  .brand { display: flex; align-items: center; gap: 12px; }
-  
-  /* 面包屑 - 仿 Store 样式 */
-  .breadcrumb-nav {
-    display: flex;
-    align-items: center;
-    background: #fff;
-    padding: 6px 16px;
-    border-radius: 20px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
-    border: 1px solid #F2F3F5;
-  }
-  .crumb-item {
-    display: flex;
-    align-items: center;
-    font-size: 14px;
-    color: #86909C;
-    cursor: pointer;
-    transition: color 0.2s;
-  }
-  .crumb-item:hover { color: #165DFF; }
-  .crumb-item.active { color: #1D2129; font-weight: 600; cursor: default; }
-  .crumb-separator { margin: 0 8px; font-size: 12px; color: #C9CDD4; }
-  .crumb-icon { margin-right: 6px; font-size: 16px; }
-  
-  /* 控制区 */
-  .controls { display: flex; gap: 12px; align-items: center; background: #fff; padding: 6px 16px; border-radius: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.03); }
-  .filter-pill { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #4E5969; border-right: 1px solid #F2F3F5; padding-right: 12px; margin-right: 4px; }
-  .filter-pill:last-child { border-right: none; padding-right: 0; margin-right: 0; }
-  .filter-pill .label { color: #86909C; display: flex; align-items: center; gap: 4px; }
-  .action-btn { margin-left: 8px; }
-  
-  /* 核心指标卡片 */
-  .stat-card { background: #fff; padding: 20px; border-radius: 12px; display: flex; align-items: center; gap: 16px; transition: all 0.2s; border: 1px solid transparent; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
-  .stat-card.bg-white { border-color: #F2F3F5; }
-  .clickable:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.08); cursor: pointer; }
-  .purple-gradient { background: linear-gradient(135deg, #722ED1 0%, #B37FEB 100%); border: none; }
-  .icon-wrap { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; flex-shrink: 0; }
-  .icon-white-bg { background: rgba(255,255,255,0.2); color: white; }
-  .bg-green-light { background: #E8FFEA; color: #00B42A; }
-  .bg-blue-light { background: #E8F3FF; color: #165DFF; }
-  .bg-orange-light { background: #FFF7E8; color: #FF7D00; }
-  
-  .stat-info { display: flex; flex-direction: column; }
-  .stat-info .label { font-size: 12px; margin-bottom: 2px; }
-  .stat-info .value { font-size: 24px; font-weight: 700; line-height: 1.2; }
-  .text-white { color: white !important; }
-  .text-gray { color: #4E5969; }
-  
-  /* 主表格卡片 - 仿 Store 样式 */
-  .main-card { 
-    background: #fff; 
-    border-radius: 12px; 
-    padding: 24px; 
-    box-shadow: 0 2px 5px rgba(0,0,0,0.02); 
-    border: 1px solid #F2F3F5;
-  }
-  
-  /* 动画效果 */
-  .fade-enter-active,
-  .fade-leave-active {
-    transition: opacity 0.3s ease;
-  }
-  
-  .fade-enter-from,
-  .fade-leave-to {
-    opacity: 0;
-  }
-  
-  /* ECharts 容器 */
-  .chart-container {
-    width: 100%;
-    height: 300px;
-  }
-  
-  /* 覆盖 Arco 一些默认样式以适应 Dashboard */
-  :deep(.arco-card-body) {
-    padding: 16px 20px;
-  }
-  
-  /* 通用字体颜色 */
-  .text-green { color: #00B42A; }
-  .text-indigo { color: #165DFF; }
-  .text-orange { color: #FF7D00; }
-  .text-red { color: #F53F3F; }
-  .mono { font-family: 'DIN Alternate', monospace; }
-  </style>
+/* 全局变量与布局 */
+.permission-layout {
+  min-height: 100vh;
+  background-color: var(--color-bg-1);
+  display: flex;
+  flex-direction: column;
+}
+
+/* 顶部导航 */
+.header-section {
+  padding: 16px 24px;
+  background-color: #fff;
+  border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
+}
+
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.title-group {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.icon-wrapper {
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #165dff 0%, #3c7eff 100%);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  box-shadow: 0 4px 10px rgba(22, 93, 255, 0.2);
+}
+
+.page-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: #1d2129;
+  line-height: 1.4;
+}
+
+.page-subtitle {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: #86909c;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+}
+
+/* 主体布局 */
+.page-body {
+  flex: 1;
+  padding: 16px;
+  background-color: var(--color-fill-2);
+  display: flex;
+  flex-direction: column;
+}
+
+.content-area {
+  background: #fff;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  padding: 24px;
+  border: 1px solid var(--color-border);
+}
+
+/* Filter Pill */
+.filter-pill { 
+  display: flex; 
+  align-items: center; 
+  gap: 4px; 
+  font-size: 13px; 
+  color: #1D2129; 
+  background-color: #F2F3F5;
+  padding: 2px 12px;
+  border-radius: 16px;
+  transition: all 0.2s;
+}
+.filter-pill:hover {
+  background-color: #E5E6EB;
+}
+.filter-pill .label { 
+  color: #86909C; 
+  margin-right: 4px;
+}
+.filter-pill :deep(.arco-select-view-single) {
+  background-color: transparent;
+  padding-left: 0;
+  padding-right: 0;
+}
+.filter-pill :deep(.arco-select-view-single:hover) {
+  background-color: transparent;
+}
+
+/* 核心指标卡片 */
+.stat-card { background: #fff; padding: 20px; border-radius: 12px; display: flex; align-items: center; gap: 16px; transition: all 0.2s; border: 1px solid transparent; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
+.stat-card.bg-white { border-color: #F2F3F5; }
+.clickable:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.08); cursor: pointer; }
+.purple-gradient { background: linear-gradient(135deg, #722ED1 0%, #B37FEB 100%); border: none; }
+.icon-wrap { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; flex-shrink: 0; }
+.icon-white-bg { background: rgba(255,255,255,0.2); color: white; }
+.bg-green-light { background: #E8FFEA; color: #00B42A; }
+.bg-blue-light { background: #E8F3FF; color: #165DFF; }
+.bg-orange-light { background: #FFF7E8; color: #FF7D00; }
+
+.stat-info { display: flex; flex-direction: column; }
+.stat-info .label { font-size: 12px; margin-bottom: 2px; }
+.stat-info .value { font-size: 24px; font-weight: 700; line-height: 1.2; }
+.text-white { color: white !important; }
+.text-gray { color: #4E5969; }
+
+/* 主表格卡片 - 仿 Store 样式 */
+.main-card { 
+  background: #fff; 
+  border-radius: 12px; 
+  padding: 24px; 
+  box-shadow: 0 2px 5px rgba(0,0,0,0.02); 
+  border: 1px solid #F2F3F5;
+}
+
+/* 动画效果 */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+/* ECharts 容器 */
+.chart-container {
+  width: 100%;
+  height: 300px;
+}
+
+/* 覆盖 Arco 一些默认样式以适应 Dashboard */
+:deep(.arco-card-body) {
+  padding: 16px 20px;
+}
+
+/* 通用字体颜色 */
+.text-green { color: #00B42A; }
+.text-indigo { color: #165DFF; }
+.text-orange { color: #FF7D00; }
+.text-red { color: #F53F3F; }
+.mono { font-family: 'DIN Alternate', monospace; }
+</style>

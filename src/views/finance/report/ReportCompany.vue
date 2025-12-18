@@ -1,47 +1,54 @@
 <template>
-  <div class="page-container">
-    <!-- Top Navigation & Filter -->
-    <div class="top-bar">
-      <div class="brand">
-        <div class="logo-box"><icon-apps /></div>
-        <div class="titles">
-          <h1 class="main-title">公司经营驾驶舱</h1>
-          <span class="sub-title">Financial & Budget Monitor</span>
+  <a-layout class="permission-layout">
+    <!-- 顶部通栏 -->
+    <div class="header-section">
+      <div class="header-content">
+        <div class="title-group">
+          <div class="icon-wrapper">
+            <Building2Icon :size="24" />
+          </div>
+          <div>
+            <h1 class="page-title">公司经营驾驶舱</h1>
+            <p class="page-subtitle">Financial & Budget Monitor</p>
+          </div>
         </div>
-      </div>
-      
-      <div class="controls">
-        <div class="filter-pill">
-          <span class="label">年份</span>
-          <a-select v-model="selectedYear" :style="{width:'80px'}" size="small" :bordered="false">
-            <a-option value="2025">2025</a-option>
-            <a-option value="2024">2024</a-option>
-          </a-select>
-        </div>
-        <div class="filter-pill">
-          <span class="label">期间</span>
-          <a-select v-model="selectedMonth" :style="{width:'100px'}" size="small" :bordered="false">
-            <a-option value="all">全年</a-option>
-            <a-option v-for="m in 12" :key="m" :value="String(m)">{{ m }}月</a-option>
-          </a-select>
+        <div class="header-actions">
+          <a-space>
+            <div class="filter-pill">
+              <span class="label">年份</span>
+              <a-select v-model="selectedYear" :style="{width:'80px'}" size="small" :bordered="false">
+                <a-option value="2025">2025</a-option>
+                <a-option value="2024">2024</a-option>
+              </a-select>
+            </div>
+            <div class="filter-pill">
+              <span class="label">期间</span>
+              <a-select v-model="selectedMonth" :style="{width:'100px'}" size="small" :bordered="false">
+                <a-option value="all">全年</a-option>
+                <a-option v-for="m in 12" :key="m" :value="String(m)">{{ m }}月</a-option>
+              </a-select>
+            </div>
+          </a-space>
         </div>
       </div>
     </div>
 
-    <!-- Main Content Area -->
-    <div class="content-wrapper main-card-container">
+    <a-layout class="page-body">
+      <a-layout-content class="content-area custom-scroll">
       <a-tabs v-model:active-key="activeTab" type="line" size="large" animation class="main-tabs">
         
         <!-- Tab Extra Actions -->
         <template #extra>
-          <a-space size="small" v-if="['balance', 'profit', 'cash'].includes(activeTab)">
-            <a-button type="text" size="small" @click="setAllExpandState(true)">
-              <template #icon><icon-expand /></template> 全部展开
-            </a-button>
-            <a-button type="text" size="small" @click="setAllExpandState(false)">
-              <template #icon><icon-shrink /></template> 全部收起
-            </a-button>
-          </a-space>
+          <div v-if="['balance', 'profit', 'cash'].includes(activeTab)" class="tab-actions">
+            <a-button-group size="small">
+              <a-button @click="setAllExpandState(true)">
+                <template #icon><icon-expand /></template> 全部展开
+              </a-button>
+              <a-button @click="setAllExpandState(false)">
+                <template #icon><icon-shrink /></template> 全部收起
+              </a-button>
+            </a-button-group>
+          </div>
         </template>
 
         <!-- 1. Balance Sheet -->
@@ -65,6 +72,13 @@
               <template #columns>
                 <a-table-column title="项目名称" data-index="name">
                    <!-- Native Tree Data: No custom cell template needed for indentation -->
+                </a-table-column>
+                <a-table-column title="期初金额" data-index="beginValue" align="right">
+                  <template #cell="{ record }">
+                    <span :class="['mono', record.level === 1 ? 'text-gray bold' : 'text-gray']">
+                      ¥ {{ formatNumber(record.beginValue) }}
+                    </span>
+                  </template>
                 </a-table-column>
                 <a-table-column title="期末余额" data-index="value" align="right">
                   <template #cell="{ record }">
@@ -100,6 +114,13 @@
                 <a-table-column title="项目名称" data-index="name">
                    <!-- Native Tree Data -->
                 </a-table-column>
+                <a-table-column title="上期金额" data-index="beginValue" align="right">
+                  <template #cell="{ record }">
+                    <span :class="['mono', record.level === 1 ? 'text-gray bold' : 'text-gray', record.beginValue < 0 ? 'text-red' : '']">
+                      ¥ {{ formatNumber(record.beginValue) }}
+                    </span>
+                  </template>
+                </a-table-column>
                 <a-table-column title="本期金额" data-index="value" align="right">
                   <template #cell="{ record }">
                     <span :class="['mono', record.level === 1 ? 'text-indigo bold' : 'text-gray', record.value < 0 ? 'text-red' : '']">
@@ -134,7 +155,14 @@
                 <a-table-column title="项目名称" data-index="name">
                    <!-- Native Tree Data -->
                 </a-table-column>
-                <a-table-column title="金额" data-index="value" align="right">
+                <a-table-column title="上期金额" data-index="beginValue" align="right">
+                  <template #cell="{ record }">
+                    <span :class="['mono', record.level === 1 ? 'text-gray bold' : 'text-gray', record.beginValue < 0 ? 'text-red' : '']">
+                      ¥ {{ formatNumber(record.beginValue) }}
+                    </span>
+                  </template>
+                </a-table-column>
+                <a-table-column title="本期金额" data-index="value" align="right">
                   <template #cell="{ record }">
                     <span :class="['mono', record.level === 1 ? 'text-green bold' : 'text-gray', record.value < 0 ? 'text-red' : '']">
                       ¥ {{ formatNumber(record.value) }}
@@ -259,7 +287,6 @@
           </div>
         </a-tab-pane>
       </a-tabs>
-    </div>
 
     <!-- Modal: Report Details -->
     <a-modal v-model:visible="reportDetailVisible" :title="`📄 ${reportDetailData?.name} - 明细账簿`" width="800px" :footer="false" class="custom-modal">
@@ -311,16 +338,23 @@
     </a-modal>
     
     <!-- Modal: Subject Details -->
-    <a-modal v-model:visible="subjectDetailVisible" :title="`${selectedSubject?.subject} - 部门消耗分布`" width="600px" :footer="false">
-       <div class="chart-box">
-          <div v-for="(item, idx) in subjectDetailData" :key="idx" class="bar-row">
-             <div class="bar-label">{{ item.dept }}</div>
-             <div class="bar-track">
-                <div class="bar-fill" :style="{ width: item.percent + '%' }"></div>
-                <span class="bar-val mono">¥ {{ formatNumber(item.value) }}</span>
-             </div>
-          </div>
-       </div>
+    <a-modal v-model:visible="subjectDetailVisible" :title="`📊 ${selectedSubject?.subject} - 部门消耗详情`" width="700px" :footer="false">
+      <a-table :data="subjectDetailData" :pagination="false" hoverable :bordered="{wrapper: true, cell: false}" @row-click="openSubjectExpenseDetail">
+        <template #columns>
+          <a-table-column title="部门名称" data-index="dept"></a-table-column>
+          <a-table-column title="实际支出" align="right" data-index="value">
+             <template #cell="{ record }"><span class="mono bold">¥ {{ formatNumber(record.value) }}</span></template>
+          </a-table-column>
+           <a-table-column title="执行进度" :width="200">
+             <template #cell="{ record }">
+               <a-progress :percent="record.percent / 100" size="small" :status="record.percent > 100 ? 'danger' : 'normal'" />
+             </template>
+           </a-table-column>
+           <a-table-column title="操作" :width="80" align="center">
+             <template #cell><icon-right style="color:#C9CDD4"/></template>
+           </a-table-column>
+        </template>
+      </a-table>
     </a-modal>
 
     <!-- Modal: Expense Details -->
@@ -337,11 +371,14 @@
       </a-table>
     </a-modal>
 
-  </div>
+      </a-layout-content>
+    </a-layout>
+  </a-layout>
 </template>
 
 <script setup>
 import { ref, computed, watch } from 'vue';
+import { Building2Icon } from 'lucide-vue-next';
 import { 
   IconCalendar, IconEdit, IconUserGroup, IconApps, IconInfoCircle, 
   IconSave, IconRight, IconExpand, IconShrink
@@ -352,75 +389,75 @@ const AMEBA_DEPARTMENTS = ['运营部-淘宝', '运营部-抖音', '运营部-�
 
 const FULL_COMPANY_REPORTS = {
     balance: [
-        { id: 'asset', name: '一、资产总计', value: 58420000, level: 1, children: [
-            { id: 'asset-current', name: '流动资产', value: 32500000, level: 2, children: [
-                { id: 'c1', name: '货币资金', value: 15200000, level: 3 },
-                { id: 'c2', name: '交易性金融资产', value: 2000000, level: 3 },
-                { id: 'c3', name: '应收账款', value: 8300000, level: 3 },
-                { id: 'c4', name: '预付款项', value: 1800000, level: 3 },
-                { id: 'c5', name: '其他应收款', value: 1200000, level: 3 },
-                { id: 'c6', name: '存货', value: 4000000, level: 3 }
+        { id: 'asset', name: '一、资产总计', value: 58420000, beginValue: 55200000, level: 1, children: [
+            { id: 'asset-current', name: '流动资产', value: 32500000, beginValue: 30100000, level: 2, children: [
+                { id: 'c1', name: '货币资金', value: 15200000, beginValue: 14000000, level: 3 },
+                { id: 'c2', name: '交易性金融资产', value: 2000000, beginValue: 1800000, level: 3 },
+                { id: 'c3', name: '应收账款', value: 8300000, beginValue: 7800000, level: 3 },
+                { id: 'c4', name: '预付款项', value: 1800000, beginValue: 1600000, level: 3 },
+                { id: 'c5', name: '其他应收款', value: 1200000, beginValue: 1100000, level: 3 },
+                { id: 'c6', name: '存货', value: 4000000, beginValue: 3800000, level: 3 }
             ]},
-            { id: 'asset-fixed', name: '非流动资产', value: 25920000, level: 2, children: [
-                { id: 'f1', name: '固定资产', value: 12500000, level: 3 },
-                { id: 'f2', name: '在建工程', value: 4500000, level: 3 },
-                { id: 'f3', name: '无形资产', value: 7800000, level: 3 },
-                { id: 'f4', name: '长期待摊费用', value: 1120000, level: 3 }
+            { id: 'asset-fixed', name: '非流动资产', value: 25920000, beginValue: 25100000, level: 2, children: [
+                { id: 'f1', name: '固定资产', value: 12500000, beginValue: 12200000, level: 3 },
+                { id: 'f2', name: '在建工程', value: 4500000, beginValue: 4200000, level: 3 },
+                { id: 'f3', name: '无形资产', value: 7800000, beginValue: 7600000, level: 3 },
+                { id: 'f4', name: '长期待摊费用', value: 1120000, beginValue: 1100000, level: 3 }
             ]}
         ]},
-        { id: 'liability', name: '二、负债合计', value: 21300000, level: 1, children: [
-            { id: 'liab-current', name: '流动负债', value: 15100000, level: 2, children: [
-                { id: 'l1', name: '短期借款', value: 5200000, level: 3 },
-                { id: 'l2', name: '应付票据', value: 1800000, level: 3 },
-                { id: 'l3', name: '应付账款', value: 6200000, level: 3 },
-                { id: 'l4', name: '应付职工薪酬', value: 1400000, level: 3 },
-                { id: 'l5', name: '应交税费', value: 500000, level: 3 }
+        { id: 'liability', name: '二、负债合计', value: 21300000, beginValue: 20500000, level: 1, children: [
+            { id: 'liab-current', name: '流动负债', value: 15100000, beginValue: 14600000, level: 2, children: [
+                { id: 'l1', name: '短期借款', value: 5200000, beginValue: 5000000, level: 3 },
+                { id: 'l2', name: '应付票据', value: 1800000, beginValue: 1700000, level: 3 },
+                { id: 'l3', name: '应付账款', value: 6200000, beginValue: 6000000, level: 3 },
+                { id: 'l4', name: '应付职工薪酬', value: 1400000, beginValue: 1400000, level: 3 },
+                { id: 'l5', name: '应交税费', value: 500000, beginValue: 500000, level: 3 }
             ]},
-            { id: 'liab-long', name: '非流动负债', value: 6200000, level: 2, children: [
-                { id: 'll1', name: '长期借款', value: 6200000, level: 3 }
+            { id: 'liab-long', name: '非流动负债', value: 6200000, beginValue: 5900000, level: 2, children: [
+                { id: 'll1', name: '长期借款', value: 6200000, beginValue: 5900000, level: 3 }
             ]}
         ]},
-        { id: 'equity', name: '三、所有者权益', value: 37120000, level: 1, children: [
-            { id: 'e1', name: '实收资本', value: 20000000, level: 2, children: [] },
-            { id: 'e2', name: '资本公积', value: 5000000, level: 2, children: [] },
-            { id: 'e3', name: '盈余公积', value: 2120000, level: 2, children: [] },
-            { id: 'e4', name: '未分配利润', value: 10000000, level: 2, children: [] }
+        { id: 'equity', name: '三、所有者权益', value: 37120000, beginValue: 34700000, level: 1, children: [
+            { id: 'e1', name: '实收资本', value: 20000000, beginValue: 20000000, level: 2, children: [] },
+            { id: 'e2', name: '资本公积', value: 5000000, beginValue: 5000000, level: 2, children: [] },
+            { id: 'e3', name: '盈余公积', value: 2120000, beginValue: 1900000, level: 2, children: [] },
+            { id: 'e4', name: '未分配利润', value: 10000000, beginValue: 7800000, level: 2, children: [] }
         ]}
     ],
     profit: [
-        { id: 'income', name: '一、营业收入', value: 85600000, level: 1, children: [
-            { id: 'inc-main', name: '主营业务收入', value: 80400000, level: 2, children: [{id:'im1', name:'线上销售收入', value:60200000, level:3}, {id:'im2', name:'分销收入', value:20200000, level:3}] },
-            { id: 'inc-other', name: '其他业务收入', value: 5200000, level: 2, children: [] }
+        { id: 'income', name: '一、营业收入', value: 85600000, beginValue: 78500000, level: 1, children: [
+            { id: 'inc-main', name: '主营业务收入', value: 80400000, beginValue: 74000000, level: 2, children: [{id:'im1', name:'线上销售收入', value:60200000, beginValue:55000000, level:3}, {id:'im2', name:'分销收入', value:20200000, beginValue:19000000, level:3}] },
+            { id: 'inc-other', name: '其他业务收入', value: 5200000, beginValue: 4500000, level: 2, children: [] }
         ]},
-        { id: 'cost', name: '二、营业成本', value: 45800000, level: 1, children: [
-            { id: 'cost-main', name: '主营业务成本', value: 42500000, level: 2, children: [] },
-            { id: 'cost-other', name: '其他业务成本', value: 3300000, level: 2, children: [] }
+        { id: 'cost', name: '二、营业成本', value: 45800000, beginValue: 42000000, level: 1, children: [
+            { id: 'cost-main', name: '主营业务成本', value: 42500000, beginValue: 39000000, level: 2, children: [] },
+            { id: 'cost-other', name: '其他业务成本', value: 3300000, beginValue: 3000000, level: 2, children: [] }
         ]},
-        { id: 'tax', name: '三、税金及附加', value: 550000, level: 1, children: [] },
-        { id: 'expense', name: '四、期间费用', value: 25600000, level: 1, children: [
-            { id: 'ex-sale', name: '销售费用', value: 15500000, level: 2, children: [{id:'es1', name:'广告推广费', value:8200000, level:3}, {id:'es2', name:'平台佣金', value:5100000, level:3}, {id:'es3', name:'物流运输费', value:2200000, level:3}] },
-            { id: 'ex-manage', name: '管理费用', value: 8100000, level: 2, children: [{id:'em1', name:'行政薪资', value:5200000, level:3}, {id:'em2', name:'办公租赁费', value:1800000, level:3}, {id:'em3', name:'差旅交通', value:1100000, level:3}] },
-            { id: 'ex-rd', name: '研发费用', value: 1600000, level: 2, children: [{id:'er1', name:'人员薪酬', value:1200000, level:3}, {id:'er2', name:'设备折旧', value:400000, level:3}] },
-            { id: 'ex-fin', name: '财务费用', value: 400000, level: 2, children: [{id:'ef1', name:'利息支出', value:350000, level:3}, {id:'ef2', name:'银行手续费', value:50000, level:3}] }
+        { id: 'tax', name: '三、税金及附加', value: 550000, beginValue: 500000, level: 1, children: [] },
+        { id: 'expense', name: '四、期间费用', value: 25600000, beginValue: 23500000, level: 1, children: [
+            { id: 'ex-sale', name: '销售费用', value: 15500000, beginValue: 14200000, level: 2, children: [{id:'es1', name:'广告推广费', value:8200000, beginValue:7500000, level:3}, {id:'es2', name:'平台佣金', value:5100000, beginValue:4700000, level:3}, {id:'es3', name:'物流运输费', value:2200000, beginValue:2000000, level:3}] },
+            { id: 'ex-manage', name: '管理费用', value: 8100000, beginValue: 7400000, level: 2, children: [{id:'em1', name:'行政薪资', value:5200000, beginValue:4800000, level:3}, {id:'em2', name:'办公租赁费', value:1800000, beginValue:1700000, level:3}, {id:'em3', name:'差旅交通', value:1100000, beginValue:900000, level:3}] },
+            { id: 'ex-rd', name: '研发费用', value: 1600000, beginValue: 1500000, level: 2, children: [{id:'er1', name:'人员薪酬', value:1200000, beginValue:1100000, level:3}, {id:'er2', name:'设备折旧', value:400000, beginValue:400000, level:3}] },
+            { id: 'ex-fin', name: '财务费用', value: 400000, beginValue: 400000, level: 2, children: [{id:'ef1', name:'利息支出', value:350000, beginValue:350000, level:3}, {id:'ef2', name:'银行手续费', value:50000, beginValue:50000, level:3}] }
         ]},
-        { id: 'profit-op', name: '五、营业利润', value: 13650000, level: 1, children: [] },
-        { id: 'profit-total', name: '六、利润总额', value: 14050000, level: 1, children: [{id:'non-op-in', name:'营业外收入', value:500000, level:2, children:[]}, {id:'non-op-out', name:'营业外支出', value:100000, level:2, children:[]}] },
-        { id: 'profit-net', name: '七、净利润', value: 10537500, level: 1, children: [] }
+        { id: 'profit-op', name: '五、营业利润', value: 13650000, beginValue: 12500000, level: 1, children: [] },
+        { id: 'profit-total', name: '六、利润总额', value: 14050000, beginValue: 12900000, level: 1, children: [{id:'non-op-in', name:'营业外收入', value:500000, beginValue:500000, level:2, children:[]}, {id:'non-op-out', name:'营业外支出', value:100000, beginValue:100000, level:2, children:[]}] },
+        { id: 'profit-net', name: '七、净利润', value: 10537500, beginValue: 9675000, level: 1, children: [] }
     ],
     cash: [
-        { id: 'c-op', name: '一、经营活动产生的现金流量', value: 12500000, level: 1, children: [
-            { id: 'cop-in', name: '销售商品、提供劳务收到的现金', value: 91000000, level: 2, children: [] },
-            { id: 'cop-out', name: '购买商品、接受劳务支付的现金', value: -78500000, level: 2, children: [] }
+        { id: 'c-op', name: '一、经营活动产生的现金流量', value: 12500000, beginValue: 11200000, level: 1, children: [
+            { id: 'cop-in', name: '销售商品、提供劳务收到的现金', value: 91000000, beginValue: 83000000, level: 2, children: [] },
+            { id: 'cop-out', name: '购买商品、接受劳务支付的现金', value: -78500000, beginValue: -71800000, level: 2, children: [] }
         ]},
-        { id: 'c-inv', name: '二、投资活动产生的现金流量', value: -5200000, level: 1, children: [
-            { id: 'cinv-in', name: '收回投资收到的现金', value: 1200000, level: 2, children: [] },
-            { id: 'cinv-out', name: '购建固定资产支付的现金', value: -6400000, level: 2, children: [] }
+        { id: 'c-inv', name: '二、投资活动产生的现金流量', value: -5200000, beginValue: -4800000, level: 1, children: [
+            { id: 'cinv-in', name: '收回投资收到的现金', value: 1200000, beginValue: 1000000, level: 2, children: [] },
+            { id: 'cinv-out', name: '购建固定资产支付的现金', value: -6400000, beginValue: -5800000, level: 2, children: [] }
         ]},
-        { id: 'c-fin', name: '三、筹资活动产生的现金流量', value: 2800000, level: 1, children: [
-            { id: 'cfin-in', name: '吸收投资收到的现金', value: 5000000, level: 2, children: [] },
-            { id: 'cfin-out', name: '偿还债务支付的现金', value: -2200000, level: 2, children: [] }
+        { id: 'c-fin', name: '三、筹资活动产生的现金流量', value: 2800000, beginValue: 2500000, level: 1, children: [
+            { id: 'cfin-in', name: '吸收投资收到的现金', value: 5000000, beginValue: 4500000, level: 2, children: [] },
+            { id: 'cfin-out', name: '偿还债务支付的现金', value: -2200000, beginValue: -2000000, level: 2, children: [] }
         ]},
-        { id: 'c-net', name: '四、现金及现金等价物净增加额', value: 10100000, level: 1, children: [] }
+        { id: 'c-net', name: '四、现金及现金等价物净增加额', value: 10100000, beginValue: 8900000, level: 1, children: [] }
     ],
     budget: [
         { id: 1, subject: '销售费用', budget: 16000000, actual: 15500000, percent: 96.8 },
@@ -494,6 +531,7 @@ const transformReportData = (data) => {
         return {
             ...item,
             value: scaleValue(item.value),
+            beginValue: scaleValue(item.beginValue || 0),
             children: hasChildren ? process(item.children) : undefined
         };
     });
@@ -590,11 +628,17 @@ const amebaDetailData = computed(() => {
 
 const subjectDetailData = computed(() => {
     if(!selectedSubject.value) return [];
-    return AMEBA_DEPARTMENTS.slice(0, 5).map(dept => ({
-        dept, value: Math.floor(selectedSubject.value.actual / 5 * (0.8 + Math.random() * 0.4)),
+    return AMEBA_DEPARTMENTS.slice(0, 8).map(dept => ({
+        dept, value: Math.floor(selectedSubject.value.actual / 8 * (0.8 + Math.random() * 0.4)),
         percent: Math.floor(Math.random() * 80 + 20)
     })).sort((a,b) => b.value - a.value);
 });
+
+const openSubjectExpenseDetail = (record) => {
+    expenseDetailTitle.value = `${selectedSubject.value?.subject} - ${record.dept} 费用明细`;
+    expenseDetailData.value = getMockExpenseDetails(record.dept, selectedSubject.value?.subject);
+    expenseDetailVisible.value = true;
+};
 
 const openExpenseDetail = (record) => {
     expenseDetailTitle.value = `${selectedAmeba.value?.group} - ${record.subject} 费用明细`;
@@ -606,34 +650,103 @@ const saveBudget = () => { isBudgetEditing.value = false; };
 </script>
 
 <style scoped>
-.page-container {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 24px;
-  background-color: #F7F8FA;
+/* 全局变量与布局 */
+.permission-layout {
   min-height: 100vh;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; 
-  color: #1D2129;
+  background-color: var(--color-bg-1);
+  display: flex;
+  flex-direction: column;
 }
 
-/* Top Bar */
-.top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
-.brand { display: flex; align-items: center; gap: 12px; }
-.logo-box { width: 40px; height: 40px; background: linear-gradient(135deg, #165DFF 0%, #0E42D2 100%); border-radius: 8px; display: flex; justify-content: center; align-items: center; color: #fff; font-size: 20px; box-shadow: 0 4px 10px rgba(22,93,255,0.2); }
-.main-title { font-size: 20px; font-weight: 700; margin: 0; line-height: 1.2; }
-.sub-title { font-size: 12px; color: #86909C; letter-spacing: 0.5px; }
+/* 顶部导航 */
+.header-section {
+  padding: 16px 24px;
+  background-color: #fff;
+  border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
+}
 
-.controls { display: flex; gap: 12px; align-items: center; background: #fff; padding: 6px 16px; border-radius: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.03); }
-.filter-pill { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #4E5969; }
-.filter-pill .label { color: #86909C; }
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
 
-/* Main Card */
-.main-card-container {
-  background: #fff;
+.title-group {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.icon-wrapper {
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #165dff 0%, #3c7eff 100%);
   border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  box-shadow: 0 4px 10px rgba(22, 93, 255, 0.2);
+}
+
+.page-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: #1d2129;
+  line-height: 1.4;
+}
+
+.page-subtitle {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: #86909c;
+}
+
+/* 主体布局 */
+.page-body {
+  flex: 1;
+  padding: 16px;
+  background-color: var(--color-fill-2);
+  display: flex;
+  flex-direction: column;
+}
+
+.content-area {
+  background: #fff;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
   padding: 24px;
-  min-height: 600px;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+  border: 1px solid var(--color-border);
+}
+
+.filter-pill { 
+  display: flex; 
+  align-items: center; 
+  gap: 4px; 
+  font-size: 13px; 
+  color: #1D2129; 
+  background-color: #F2F3F5;
+  padding: 2px 12px;
+  border-radius: 16px;
+  transition: all 0.2s;
+}
+.filter-pill:hover {
+  background-color: #E5E6EB;
+}
+.filter-pill .label { 
+  color: #86909C; 
+  margin-right: 4px;
+}
+.filter-pill :deep(.arco-select-view-single) {
+  background-color: transparent;
+  padding-left: 0;
+  padding-right: 0;
+}
+.filter-pill :deep(.arco-select-view-single:hover) {
+  background-color: transparent;
 }
 
 .report-content {

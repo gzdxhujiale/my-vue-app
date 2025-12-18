@@ -1,66 +1,59 @@
 <template>
   <div class="rbac-container">
-    <a-page-header :show-back="false" class="page-header">
-      <template #title>
-        <span class="header-title">权限申请中心</span>
-      </template>
-      <template #subtitle>
-        统一管理数据与功能权限的申请、审批流转
-      </template>
-      <template #extra>
-        <a-space>
-          <a-input-search 
-            v-model="searchText" 
-            placeholder="搜索申请人/部门..." 
-            style="width: 260px" 
-            allow-clear
-          />
-          <a-button type="primary" @click="openDrawer('new')">
-            <template #icon><icon-plus /></template>
-            发起申请
-          </a-button>
-        </a-space>
-      </template>
-    </a-page-header>
+    <div class="header-section">
+      <div class="header-content">
+        <div class="title-group">
+          <div class="icon-wrapper">
+            <icon-send size="24" />
+          </div>
+          <div>
+            <h1 class="page-title">权限申请中心</h1>
+            <p class="page-subtitle">统一管理数据与功能权限的申请、审批流转</p>
+          </div>
+        </div>
+        <div class="header-actions">
+          <div class="stat-group">
+            <div class="stat-item">
+              <div class="stat-label">全部申请</div>
+              <div class="stat-value">{{ applications.length }}</div>
+            </div>
+            <div class="stat-divider"></div>
+            <div class="stat-item">
+              <div class="stat-label">待审批</div>
+              <div class="stat-value text-amber">{{ pendingCount }}</div>
+            </div>
+            <div class="stat-divider"></div>
+            <div class="stat-item">
+              <div class="stat-label">已通过</div>
+              <div class="stat-value text-emerald">{{ approvedCount }}</div>
+            </div>
+            <div class="stat-divider"></div>
+            <div class="stat-item">
+              <div class="stat-label">已拒绝</div>
+              <div class="stat-value text-red">{{ rejectedCount }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <div class="content-wrapper">
-      <a-row :gutter="20" class="stat-row">
-        <a-col :span="6">
-          <a-card class="stat-card" :bordered="false" hoverable>
-            <a-statistic title="全部申请" :value="applications.length" show-group-separator>
-              <template #suffix><span class="stat-unit">条</span></template>
-            </a-statistic>
-            <div class="stat-icon-bg bg-blue"><icon-apps /></div>
-          </a-card>
-        </a-col>
-        <a-col :span="6">
-          <a-card class="stat-card" :bordered="false" hoverable>
-            <a-statistic title="待审批" :value="pendingCount" :value-style="{ color: '#ff7d00' }">
-              <template #suffix><span class="stat-unit">条</span></template>
-            </a-statistic>
-            <div class="stat-icon-bg bg-orange"><icon-clock-circle /></div>
-          </a-card>
-        </a-col>
-        <a-col :span="6">
-          <a-card class="stat-card" :bordered="false" hoverable>
-            <a-statistic title="已通过" :value="approvedCount" :value-style="{ color: '#00b42a' }">
-              <template #suffix><span class="stat-unit">条</span></template>
-            </a-statistic>
-            <div class="stat-icon-bg bg-green"><icon-check-circle /></div>
-          </a-card>
-        </a-col>
-        <a-col :span="6">
-          <a-card class="stat-card" :bordered="false" hoverable>
-            <a-statistic title="已拒绝" :value="rejectedCount" :value-style="{ color: '#f53f3f' }">
-              <template #suffix><span class="stat-unit">条</span></template>
-            </a-statistic>
-            <div class="stat-icon-bg bg-red"><icon-close-circle /></div>
-          </a-card>
-        </a-col>
-      </a-row>
-
-      <a-card class="list-card" :bordered="false">
+      <a-card class="list-card">
         <a-tabs v-model:active-key="activeTab" type="rounded" size="medium" animation>
+          <template #extra>
+            <a-space>
+              <a-input-search 
+                v-model="searchText" 
+                placeholder="搜索申请人/部门..." 
+                style="width: 260px" 
+                allow-clear
+              />
+              <a-button type="primary" @click="openDrawer('new')">
+                <template #icon><icon-plus /></template>
+                发起申请
+              </a-button>
+            </a-space>
+          </template>
           <a-tab-pane key="pending">
             <template #title>
               待审批 <a-badge :count="pendingCount" :offset="[6, -2]" dot />
@@ -81,23 +74,7 @@
             <a-empty description="暂无相关申请记录" />
           </template>
           <template #item="{ item }">
-            <a-list-item class="list-item-hover" action-layout="vertical">
-              <template #actions>
-                <a-space v-if="item.status === 'pending'">
-                  <a-button type="text" status="success" size="small" @click="openApprovalModal('approve', item)">
-                    <template #icon><icon-check /></template> 通过
-                  </a-button>
-                  <a-button type="text" status="danger" size="small" @click="openApprovalModal('reject', item)">
-                    <template #icon><icon-close /></template> 拒绝
-                  </a-button>
-                  <a-divider direction="vertical" />
-                  <a-button type="text" size="small" @click="openDrawer('view', item)">详情</a-button>
-                </a-space>
-                <a-button v-else type="secondary" size="small" @click="openDrawer('view', item)">
-                  <template #icon><icon-eye /></template> 查看详情
-                </a-button>
-              </template>
-
+            <a-list-item class="list-item-hover">
               <a-list-item-meta>
                 <template #avatar>
                   <a-avatar :style="{ backgroundColor: getAvatarColor(item.applicant) }" :size="48">
@@ -108,32 +85,51 @@
                   <div class="list-title-row">
                     <span class="item-name">{{ item.applicant }}</span>
                     <a-tag size="small" class="dept-tag">{{ item.department }}</a-tag>
-                    <span class="item-time">{{ item.createTime }}</span>
                   </div>
                 </template>
                 <template #description>
                   <div class="list-desc-content">
-                    <a-descriptions :column="2" layout="inline-horizontal" size="small" class="mini-desc">
-                      <a-descriptions-item label="申请角色">
-                        <a-space wrap size="mini">
-                          <a-tag v-for="role in item.requestRoles" :key="role" color="arcoblue" size="small">
-                            {{ role }}
-                          </a-tag>
-                        </a-space>
-                      </a-descriptions-item>
-                      <a-descriptions-item label="当前状态">
-                        <a-tag :color="getStatusConfig(item.status).color" size="small" bordered>
-                           <template #icon><component :is="getStatusConfig(item.status).icon" /></template>
-                           {{ getStatusConfig(item.status).label }}
+                    <div class="desc-row">
+                      <span class="desc-label">申请角色：</span>
+                      <a-space wrap size="mini">
+                        <a-tag v-for="role in item.requestRoles" :key="role" color="arcoblue" size="small">
+                          {{ role }}
                         </a-tag>
-                      </a-descriptions-item>
-                    </a-descriptions>
-                    <div class="reason-preview text-truncate">
-                      <span class="label">理由：</span>{{ item.reason }}
+                      </a-space>
+                    </div>
+                    <div class="desc-row reason-row">
+                      <span class="desc-label">申请理由：</span>
+                      <span class="reason-text">{{ item.reason }}</span>
                     </div>
                   </div>
                 </template>
               </a-list-item-meta>
+              
+              <template #actions>
+                <div class="item-right-section">
+                  <div class="status-time-block">
+                    <a-tag :color="getStatusConfig(item.status).color" size="medium" class="status-tag">
+                      <template #icon><component :is="getStatusConfig(item.status).icon" /></template>
+                      {{ getStatusConfig(item.status).label }}
+                    </a-tag>
+                    <div class="time-text">{{ item.createTime }}</div>
+                  </div>
+                  <a-divider direction="vertical" style="height: 48px; margin: 0 16px;" />
+                  <div class="action-buttons">
+                    <template v-if="item.status === 'pending'">
+                      <a-button type="outline" status="success" size="small" @click="openApprovalModal('approve', item)">
+                        <template #icon><icon-check /></template> 通过
+                      </a-button>
+                      <a-button type="outline" status="danger" size="small" @click="openApprovalModal('reject', item)">
+                        <template #icon><icon-close /></template> 拒绝
+                      </a-button>
+                    </template>
+                    <a-button type="text" size="small" @click="openDrawer('view', item)">
+                      <template #icon><icon-eye /></template> 查看详情
+                    </a-button>
+                  </div>
+                </div>
+              </template>
             </a-list-item>
           </template>
         </a-list>
@@ -268,7 +264,7 @@ import { Message } from '@arco-design/web-vue';
 // 引入图标
 import { 
   IconApps, IconClockCircle, IconCheckCircle, IconCloseCircle, 
-  IconPlus, IconCheck, IconClose, IconEye, IconMessage, IconSearch
+  IconPlus, IconCheck, IconClose, IconEye, IconMessage, IconSearch, IconSend
 } from '@arco-design/web-vue/es/icon';
 
 // ========== 模拟数据 (保持业务逻辑不变) ==========
@@ -455,12 +451,56 @@ const handleApproveConfirm = () => {
 
 <style scoped>
 .rbac-container {
-  background-color: #f7f8fa; /* 统一的灰底背景 */
   min-height: 100vh;
+  padding: 12px 24px;
+  background-color: var(--color-fill-2);
+}
+
+.header-section {
+  margin: -12px -24px 24px -24px;
+  padding: 16px 24px;
+  background-color: #fff;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.title-group {
+  display: flex;
+  gap: 16px;
+}
+
+.icon-wrapper {
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #165dff 0%, #3c7eff 100%);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  box-shadow: 0 4px 10px rgba(22, 93, 255, 0.2);
+}
+
+.page-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: #1d2129;
+  line-height: 1.4;
+}
+
+.page-subtitle {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: #86909c;
 }
 
 .page-header {
-  background: #fff;
   border-bottom: 1px solid #f2f3f5;
   padding: 16px 32px;
 }
@@ -472,109 +512,145 @@ const handleApproveConfirm = () => {
 }
 
 .content-wrapper {
-  max-width: 1200px;
-  margin: 24px auto;
-  padding: 0 24px;
+  padding: 0;
 }
 
-/* 统计卡片样式 */
-.stat-row {
-  margin-bottom: 24px;
-}
-
-.stat-card {
-  position: relative;
-  overflow: hidden;
-  border-radius: 4px;
-  transition: all 0.2s ease-in-out;
-}
-
-.stat-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-}
-
-.stat-unit {
-  font-size: 12px;
-  color: #86909c;
-  margin-left: 4px;
-}
-
-/* 统计图标背景装饰 */
-.stat-icon-bg {
-  position: absolute;
-  right: -10px;
-  top: -10px;
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  opacity: 0.12;
+.header-actions {
   display: flex;
   align-items: center;
-  justify-content: center;
-  font-size: 40px;
-  pointer-events: none;
 }
-.bg-blue { background: #165DFF; color: #165DFF; }
-.bg-orange { background: #FF7D00; color: #FF7D00; }
-.bg-green { background: #00B42A; color: #00B42A; }
-.bg-red { background: #F53F3F; color: #F53F3F; }
+
+.stat-group {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: var(--color-text-3);
+  line-height: 1.2;
+}
+
+.stat-value {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-text-1);
+  line-height: 1.2;
+}
+
+.text-amber { color: rgb(217, 119, 6); }
+.text-emerald { color: rgb(5, 150, 105); }
+.text-red { color: rgb(220, 38, 38); }
+
+.stat-divider {
+  width: 1px;
+  height: 24px;
+  background-color: var(--color-border-2);
+}
 
 /* 列表卡片样式 */
 .list-card {
-  border-radius: 4px;
+  border-radius: 8px;
 }
 
 .list-item-hover {
-  padding: 20px 16px;
+  padding: 16px;
   transition: background-color 0.2s;
+  border-bottom: 1px solid #f2f3f5;
 }
 
 .list-item-hover:hover {
-  background-color: #fafafa;
+  background-color: #f7f8fa;
 }
 
 .list-title-row {
   display: flex;
   align-items: center;
-  margin-bottom: 8px;
+  gap: 8px;
+  margin-bottom: 4px;
 }
 
 .item-name {
   font-weight: 600;
-  font-size: 16px;
-  margin-right: 8px;
+  font-size: 15px;
   color: #1d2129;
 }
 
-.item-time {
-  margin-left: auto;
-  color: #86909c;
-  font-size: 13px;
-}
-
 .dept-tag {
+  background: #f2f3f5;
   color: #4e5969;
+  border: none;
 }
 
-/* 列表描述微调 */
-.mini-desc :deep(.arco-descriptions-item-label) {
-  padding-right: 8px;
+.list-desc-content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.desc-row {
+  display: flex;
+  align-items: center;
+  font-size: 13px;
+}
+
+.desc-label {
+  color: #86909c;
+  margin-right: 8px;
+  flex-shrink: 0;
+}
+
+.reason-row {
+  align-items: flex-start;
+}
+
+.reason-text {
+  color: #4e5969;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* 右侧区域样式 */
+.item-right-section {
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+
+.status-time-block {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  min-width: 100px;
+}
+
+.status-tag {
+  font-weight: 500;
+}
+
+.time-text {
+  font-size: 12px;
   color: #86909c;
 }
 
-.reason-preview {
-  margin-top: 10px;
-  background: #f7f8fa;
-  padding: 6px 12px;
-  border-radius: 4px;
-  color: #4e5969;
-  font-size: 13px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.action-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 120px;
 }
-.reason-preview .label { color: #86909c; }
 
 /* 详情抽屉样式 */
 .detail-container {
