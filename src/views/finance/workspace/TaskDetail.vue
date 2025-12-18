@@ -1,25 +1,44 @@
 <script setup>
+    import { ref, computed } from 'vue'
     import { 
       IconClockCircle, IconCheckCircle, IconArrowLeft, IconFile, 
       IconDownload, IconDelete, IconUpload, IconUser, IconApps,
-      IconCalendar, IconExclamationCircle
+      IconCalendar, IconExclamationCircle, IconCopy
     } from '@arco-design/web-vue/es/icon'
+    import { Message } from '@arco-design/web-vue'
     
     const props = defineProps({
       selectedItem: { type: Object, required: true },
       goBack: { type: Function, required: true }
     })
     
-    const fileDetailData = [
-      { id: 1, name: '2025.10_保证金账单.xlsx', type: '保证金账单', status: 'pending', size: '24KB', progress: 40 },
-      { id: 2, name: '2025.10_资金账单.xlsx', type: '资金账单', status: 'pending', size: '1.2MB', progress: 80 },
-      { id: 3, name: '2025.10_结算账单.xlsx', type: '结算账单', status: 'pending', size: '450KB', progress: 0 },
-      { id: 4, name: '2025.10_订单管理.xlsx', type: '订单管理', status: 'done', size: '5.6MB', progress: 100 },
-      { id: 5, name: '2025.10_技术服务费.xlsx', type: '技术服务费', status: 'done', size: '1.1MB', progress: 100 },
-    ]
+    // 生成文件名
+    const generateFileName = (billType) => {
+      return `${props.selectedItem.period}_${props.selectedItem.platform}_${props.selectedItem.shop}_${billType}.xlsx`
+    }
+    
+    const fileDetailData = computed(() => [
+      { id: 1, type: '资金账单', status: 'pending', size: '1.2MB', progress: 80 },
+      { id: 2, type: '结算账单', status: 'pending', size: '450KB', progress: 0 },
+      { id: 3, type: '订单管理', status: 'done', size: '5.6MB', progress: 100 },
+    ].map(file => ({
+      ...file,
+      name: generateFileName(file.type)
+    })))
     
     const handleDownload = (file) => console.log(`下载: ${file.name}`)
     const handleDelete = (file) => console.log(`删除: ${file.name}`)
+    
+    // 复制文件名
+    const handleCopyFileName = async (file) => {
+      try {
+        await navigator.clipboard.writeText(file.name)
+        Message.success(`已复制: ${file.name}`)
+      } catch (err) {
+        Message.error('复制失败')
+        console.error('复制错误:', err)
+      }
+    }
     </script>
       
     <template>
@@ -45,7 +64,71 @@
     
         <!-- 栅格布局 -->
         <a-row :gutter="24">
-          <!-- 左侧：固定信息区 -->
+          <!-- 左侧：文件列表 -->
+          <a-col :span="16">
+            <a-card :bordered="false" class="file-list-card">
+              <div class="file-list-header">
+                <div>
+                  <div class="title">账单文件列表</div>
+                  <div class="subtitle">需上传 3 个文件</div>
+                </div>
+                <a-tag>Total: {{ fileDetailData.length }}</a-tag>
+              </div>
+              
+              <a-list :bordered="false" :split="false">
+                <a-list-item v-for="f in fileDetailData" :key="f.id" class="file-item">
+                  <div class="file-item-content">
+                    <!-- 图标 -->
+                    <div class="file-icon" :class="f.status === 'done' ? 'done' : 'pending'">
+                      <IconFile size="20" />
+                    </div>
+    
+                    <!-- 信息主体 -->
+                    <div class="file-info">
+                      <div class="file-main">
+                        <div>
+                          <div class="file-name">{{ f.name }}</div>
+                          <a-space size="small" style="margin-top: 4px">
+                            <span class="file-meta">{{ f.type }}</span>
+                            <span class="dot"></span>
+                            <span class="file-meta">{{ f.size }}</span>
+                          </a-space>
+                        </div>
+                        
+                        <!-- 按钮组 -->
+                        <div class="file-actions">
+                           <a-button v-if="f.status === 'done'" type="text" shape="circle" size="mini" @click="handleDownload(f)"><IconDownload /></a-button>
+                           <a-button v-else type="text" shape="circle" size="mini" style="color: rgb(79, 70, 229)"><IconUpload /></a-button>
+                           <a-button type="text" shape="circle" size="mini" @click="handleCopyFileName(f)" style="color: var(--color-text-3)">
+                             <template #icon><IconCopy /></template>
+                           </a-button>
+                           <a-button type="text" status="danger" shape="circle" size="mini" @click="handleDelete(f)"><IconDelete /></a-button>
+                        </div>
+                      </div>
+    
+                      <!-- 进度条 -->
+                      <div style="margin-top: 8px">
+                        <div v-if="f.status === 'done'" class="status-done">
+                          <IconCheckCircle /> 已上传完成
+                        </div>
+                        <div v-else class="progress-wrapper">
+                          <a-progress 
+                            :percent="f.progress/100" 
+                            :color="{ '0%': 'rgb(99, 102, 241)', '100%': 'rgb(79, 70, 229)' }"
+                            :show-text="false"
+                            size="small"
+                          />
+                          <span class="progress-text">{{ f.progress }}%</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </a-list-item>
+              </a-list>
+            </a-card>
+          </a-col>
+    
+          <!-- 右侧：固定信息区 -->
           <a-col :span="8">
             <a-space direction="vertical" size="large" fill>
               <!-- 任务信息卡片 -->
@@ -103,67 +186,6 @@
                 </a-button>
               </a-card>
             </a-space>
-          </a-col>
-    
-          <!-- 右侧：文件列表 -->
-          <a-col :span="16">
-            <a-card :bordered="false" class="file-list-card">
-              <div class="file-list-header">
-                <div>
-                  <div class="title">账单文件列表</div>
-                  <div class="subtitle">需上传 5 个文件</div>
-                </div>
-                <a-tag>Total: {{ fileDetailData.length }}</a-tag>
-              </div>
-              
-              <a-list :bordered="false" :split="false">
-                <a-list-item v-for="f in fileDetailData" :key="f.id" class="file-item">
-                  <div class="file-item-content">
-                    <!-- 图标 -->
-                    <div class="file-icon" :class="f.status === 'done' ? 'done' : 'pending'">
-                      <IconFile size="20" />
-                    </div>
-    
-                    <!-- 信息主体 -->
-                    <div class="file-info">
-                      <div class="file-main">
-                        <div>
-                          <div class="file-name">{{ f.name }}</div>
-                          <a-space size="small" style="margin-top: 4px">
-                            <span class="file-meta">{{ f.type }}</span>
-                            <span class="dot"></span>
-                            <span class="file-meta">{{ f.size }}</span>
-                          </a-space>
-                        </div>
-                        
-                        <!-- 按钮组 -->
-                        <div class="file-actions">
-                           <a-button v-if="f.status === 'done'" type="text" shape="circle" size="mini" @click="handleDownload(f)"><IconDownload /></a-button>
-                           <a-button v-else type="text" shape="circle" size="mini" style="color: rgb(79, 70, 229)"><IconUpload /></a-button>
-                           <a-button type="text" status="danger" shape="circle" size="mini" @click="handleDelete(f)"><IconDelete /></a-button>
-                        </div>
-                      </div>
-    
-                      <!-- 进度条 -->
-                      <div style="margin-top: 8px">
-                        <div v-if="f.status === 'done'" class="status-done">
-                          <IconCheckCircle /> 已上传完成
-                        </div>
-                        <div v-else class="progress-wrapper">
-                          <a-progress 
-                            :percent="f.progress/100" 
-                            :color="{ '0%': 'rgb(99, 102, 241)', '100%': 'rgb(79, 70, 229)' }"
-                            :show-text="false"
-                            size="small"
-                          />
-                          <span class="progress-text">{{ f.progress }}%</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </a-list-item>
-              </a-list>
-            </a-card>
           </a-col>
         </a-row>
       </div>
@@ -383,10 +405,8 @@
       font-size: 14px;
       font-weight: bold;
       color: var(--color-text-1);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      max-width: 240px;
+      max-width: 450px;
+      word-break: break-all;
     }
     
     .file-meta {
@@ -425,11 +445,7 @@
     }
     
     .file-actions {
-      opacity: 0;
-      transition: opacity 0.2s;
-    }
-    
-    .file-item:hover .file-actions {
-      opacity: 1;
+      display: flex;
+      gap: 4px;
     }
     </style>

@@ -7,24 +7,87 @@ import {
 } from '@arco-design/web-vue/es/icon'
 
 // --- 数据常量 ---
-const CLIENT_OPTIONS = ['橘子', '苹果', '香蕉']
+const CLIENT_OPTIONS = ['客户A', '客户B', '客户C']
 const PLATFORM_OPTIONS = ['抖音', '快手', '淘宝']
-const SHOP_SUFFIXES = ['A店', 'B店', 'C店']
+const SHOP_SUFFIXES = ['1号店', '2号店', '3号店']
+const PERIOD_OPTIONS = ['2025.06', '2025.07', '2025.08', '2025.09', '2025.10', '2025.11']
+
+// --- 生成模拟数据 ---
+const generateTodoData = () => {
+  const data = []
+  let id = 1
+  
+  // 当前月份（2025.11）
+  const currentPeriod = '2025.11'
+  
+  // 状态配置：待上传、已上传、已初级校验、已加载
+  const statusConfig = [
+    { status: 'pending', statusText: '待上传', hasDeadline: true },
+    { status: 'uploaded', statusText: '已上传', hasDeadline: false },
+    { status: 'verified', statusText: '已初级校验', hasDeadline: false },
+    { status: 'loaded', statusText: '已加载', hasDeadline: false }
+  ]
+  
+  // 所有店铺组合（3客户 x 3平台 x 3店铺 = 27个店铺，取前20个）
+  const allShops = []
+  CLIENT_OPTIONS.forEach(client => {
+    PLATFORM_OPTIONS.forEach(platform => {
+      SHOP_SUFFIXES.forEach(suffix => {
+        allShops.push({ client, platform, shop: `${client}${platform}${suffix}` })
+      })
+    })
+  })
+  const shops = allShops.slice(0, 20) // 取前20个店铺
+  
+  // 为每个账期生成20条数据
+  PERIOD_OPTIONS.forEach((period, periodIdx) => {
+    shops.forEach((shopInfo, shopIdx) => {
+      let statusObj
+      let deadline = null
+      let deadlineText = '-'
+      
+      if (period === currentPeriod) {
+        // 当前月份：随机分配4种状态
+        const rand = Math.random()
+        if (rand < 0.35) {
+          statusObj = statusConfig[0] // 待上传 35%
+          deadline = Math.floor(Math.random() * 20) + 1
+          deadlineText = `剩 ${deadline} 天`
+        } else if (rand < 0.6) {
+          statusObj = statusConfig[1] // 已上传 25%
+        } else if (rand < 0.8) {
+          statusObj = statusConfig[2] // 已初级校验 20%
+        } else {
+          statusObj = statusConfig[3] // 已加载 20%
+        }
+      } else {
+        // 其他月份：全部是已加载
+        statusObj = statusConfig[3]
+      }
+      
+      data.push({
+        id: id++,
+        period,
+        client: shopInfo.client,
+        platform: shopInfo.platform,
+        shop: shopInfo.shop,
+        status: statusObj.status,
+        statusText: statusObj.statusText,
+        deadline,
+        deadlineText
+      })
+    })
+  })
+  
+  return data
+}
 
 // --- 响应式数据 ---
-const todoData = ref([
-  { id: 1, period: '2025.10', client: '橘子', platform: '淘宝', shop: '橘子淘宝A店', status: 'pending', statusText: '待上传', deadline: 2, deadlineText: '剩 2 天' },
-  { id: 2, period: '2025.10', client: '苹果', platform: '抖音', shop: '苹果抖音B店', status: 'done', statusText: '已上传', deadline: null, deadlineText: '-' },
-  { id: 3, period: '2025.10', client: '香蕉', platform: '快手', shop: '香蕉快手C店', status: 'pending', statusText: '待上传', deadline: 5, deadlineText: '剩 5 天' },
-  { id: 4, period: '2025.11', client: '橘子', platform: '抖音', shop: '橘子抖音A店', status: 'pending', statusText: '待上传', deadline: 12, deadlineText: '剩 12 天' },
-  { id: 5, period: '2025.11', client: '苹果', platform: '淘宝', shop: '苹果淘宝C店', status: 'done', statusText: '已上传', deadline: null, deadlineText: '-' },
-  { id: 6, period: '2025.11', client: '香蕉', platform: '快手', shop: '香蕉快手B店', status: 'pending', statusText: '待上传', deadline: 15, deadlineText: '剩 15 天' },
-  { id: 7, period: '2025.11', client: '橘子', platform: '淘宝', shop: '橘子淘宝B店', status: 'pending', statusText: '待上传', deadline: 3, deadlineText: '剩 3 天' },
-])
+const todoData = ref(generateTodoData())
 
 const view = ref('list') // 'list' | 'detail'
 const selectedItem = ref(null)
-const filters = ref({ client: '', platform: '', shop: '', search: '' })
+const filters = ref({ period: '2025.11', client: '', platform: '', shop: '', search: '' })
 
 // --- 计算属性 ---
 // 动态计算可选店铺
@@ -36,6 +99,7 @@ const availableShops = computed(() => {
 })
 
 const filteredData = computed(() => todoData.value.filter(i =>
+  (!filters.value.period || i.period === filters.value.period) &&
   (!filters.value.client || i.client === filters.value.client) &&
   (!filters.value.platform || i.platform === filters.value.platform) &&
   (!filters.value.shop || i.shop === filters.value.shop) &&
@@ -43,9 +107,9 @@ const filteredData = computed(() => todoData.value.filter(i =>
 ))
 
 const stats = computed(() => ({
-  total: todoData.value.length,
-  pending: todoData.value.filter(i => i.status === 'pending').length,
-  done: todoData.value.filter(i => i.status === 'done').length
+  total: filteredData.value.length,
+  pending: filteredData.value.filter(i => i.status === 'pending').length,
+  done: filteredData.value.filter(i => ['uploaded', 'verified', 'loaded'].includes(i.status)).length
 }))
 
 // Arco Table 列配置
@@ -61,7 +125,7 @@ const columns = [
 
 // --- 方法 ---
 const resetFilters = () => {
-  filters.value = { client: '', platform: '', shop: '', search: '' }
+  filters.value = { period: '2025.11', client: '', platform: '', shop: '', search: '' }
 }
 
 const goToDetail = (item) => {
@@ -139,17 +203,32 @@ const getPlatformColor = (platform) => {
             </div>
             
             <div class="toolbar-right">
-              <!-- 胶囊式筛选器：极度瘦身 -->
+              <!-- 胶囊式筛选器 -->
               <div class="filter-capsule">
                  <IconFilter class="filter-icon" />
                  
-                 <!-- 客户：宽度减半 -->
+                 <!-- 账期 -->
+                 <a-select 
+                   v-model="filters.period" 
+                   placeholder="账期" 
+                   :bordered="false" 
+                   size="small"
+                   :style="{width:'120px'}"
+                   allow-clear
+                 >
+                   <a-option v-for="p in PERIOD_OPTIONS" :key="p" :value="p">{{p}}</a-option>
+                 </a-select>
+                 
+                 <div class="divider"></div>
+                 
+                 <!-- 客户 -->
                  <a-select 
                    v-model="filters.client" 
                    placeholder="客户" 
                    :bordered="false" 
                    size="small"
-                   class="capsule-select"
+                   :style="{width:'100px'}"
+                   allow-clear
                    @change="filters.shop = ''"
                  >
                    <a-option v-for="c in CLIENT_OPTIONS" :key="c" :value="c">{{c}}</a-option>
@@ -157,13 +236,14 @@ const getPlatformColor = (platform) => {
                  
                  <div class="divider"></div>
                  
-                 <!-- 平台：宽度减半 -->
+                 <!-- 平台 -->
                  <a-select 
                    v-model="filters.platform" 
                    placeholder="平台" 
                    :bordered="false"
                    size="small" 
-                   class="capsule-select"
+                   :style="{width:'100px'}"
+                   allow-clear
                    @change="filters.shop = ''"
                  >
                    <a-option v-for="p in PLATFORM_OPTIONS" :key="p" :value="p">{{p}}</a-option>
@@ -171,13 +251,14 @@ const getPlatformColor = (platform) => {
 
                  <div class="divider"></div>
 
-                 <!-- 店铺：更紧凑 -->
+                 <!-- 店铺 -->
                  <a-select 
                    v-model="filters.shop" 
                    placeholder="店铺" 
                    :bordered="false"
                    size="small" 
-                   class="capsule-select shop-select"
+                   :style="{width:'100px'}"
+                   allow-clear
                    :disabled="!filters.client || !filters.platform"
                  >
                    <a-option v-for="s in availableShops" :key="s" :value="s">{{s}}</a-option>
@@ -201,7 +282,7 @@ const getPlatformColor = (platform) => {
           <a-table 
             :data="filteredData" 
             :columns="columns" 
-            :pagination="{ pageSize: 8 }"
+            :pagination="{ pageSize: 12 }"
             :bordered="{ cell: true }"
             row-key="id"
             hoverable
@@ -217,7 +298,7 @@ const getPlatformColor = (platform) => {
             <!-- 状态列 -->
             <template #status="{ record }">
               <a-badge 
-                :status="record.status === 'pending' ? 'warning' : 'success'" 
+                :status="record.status === 'pending' ? 'warning' : record.status === 'uploaded' ? 'processing' : record.status === 'verified' ? 'success' : 'default'" 
                 :text="record.statusText" 
               />
             </template>
@@ -406,20 +487,6 @@ const getPlatformColor = (platform) => {
   font-size: 12px;
 }
 
-.capsule-select {
-  width: 65px; /* 压缩宽度：原80px -> 65px */
-  background: transparent !important;
-}
-
-/* 覆盖 Arco 默认样式以支持超窄选择框 */
-:deep(.capsule-select .arco-select-view-input) {
-  padding-left: 4px;
-}
-
-.shop-select {
-  width: 90px; /* 压缩宽度：原120px -> 90px */
-}
-
 .divider {
   width: 1px;
   height: 12px;
@@ -428,7 +495,7 @@ const getPlatformColor = (platform) => {
 }
 
 .search-input {
-  width: 160px; /* 搜索框也稍微变窄 */
+  width: 240px; /* 增加到1.5倍：原160px -> 240px */
   background-color: var(--color-fill-2);
   border-radius: 18px;
   border: 1px solid transparent;
