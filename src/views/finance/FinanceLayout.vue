@@ -13,7 +13,6 @@
   const route = useRoute()
   
   const collapsed = ref(false)
-  const showCopyrightModal = ref(true)
   
   // 默认展开的菜单项
   const defaultOpenKeys = ['/finance/report-center', '/finance/bi-center']
@@ -104,31 +103,10 @@
   }
   
   const goBack = () => router.push('/')
-  const closeCopyrightModal = () => { showCopyrightModal.value = false }
   </script>
   
   <template>
     <div class="finance-layout-wrapper">
-      <a-modal
-        v-model:visible="showCopyrightModal"
-        :footer="false"
-        :width="420"
-        title-align="start"
-      >
-        <template #title>关于本演示系统</template>
-        <div class="copyright-content">
-          <div class="copyright-icon">
-            <InfoIcon :size="24" />
-          </div>
-          <p class="copyright-title">演示项目，旨在展示数据可视化及业务流程逻辑。</p>
-          <ul class="copyright-list">
-            <li>所有数据均为脱敏模拟数据，不涉及真实商业机密。</li>
-            <li>离职后本人经复盘后重新构建，与原产品有较大差异。</li>
-          </ul>
-          <a-button type="primary" long @click="closeCopyrightModal">我已了解</a-button>
-        </div>
-      </a-modal>
-  
       <a-layout class="layout-container">
         <a-layout-sider
           hide-trigger

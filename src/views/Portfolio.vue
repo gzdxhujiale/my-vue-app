@@ -16,35 +16,35 @@ const revealedElements = ref(new Set())
 
 // 作品展示数据
 const showcaseItems = [
-  { id: 1, title: '财务数据中心', desc: '数据中台', icon: BarChartBigIcon, color: 'indigo', category: 'b-side', path: '/finance' },
-  { id: 2, title: 'AI智能助手', desc: 'AI Agent搭建', icon: BotIcon, color: 'emerald', category: 'ai', path: null },
-  { id: 3, title: '思维导图软件', desc: '效率工具', icon: GitForkIcon, color: 'amber', category: 'tools', path: null },
-  { id: 4, title: '窗口控制器', desc: '交互组件', icon: AppWindowIcon, color: 'purple', category: 'tools', path: null },
-  { id: 5, title: '文档编辑器', desc: 'AI写作', icon: FileEditIcon, color: 'rose', category: 'tools', path: null }
+  { id: 1, title: '财务数据中心', desc: '数据中台', icon: BarChartBigIcon, color: 'indigo', category: 'b-side', path: '/finance', badge: '高保真原型' },
+  { id: 2, title: 'AI智能助手', desc: 'AI Agent搭建', icon: BotIcon, color: 'emerald', category: 'ai', externalUrl: 'https://www.baidu.com', badge: 'AI Agent智能体' },
+  { id: 3, title: '思维导图软件', desc: '效率工具', icon: GitForkIcon, color: 'amber', category: 'tools', externalUrl: 'https://www.baidu.com', badge: '效率工具' },
+  { id: 4, title: '窗口控制器', desc: '交互组件', icon: AppWindowIcon, color: 'purple', category: 'tools', externalUrl: 'https://www.baidu.com', badge: '效率工具' },
+  { id: 5, title: '文档编辑器', desc: 'AI写作', icon: FileEditIcon, color: 'rose', category: 'tools', externalUrl: 'https://www.baidu.com', badge: '效率工具' }
 ]
 
-// 核心竞争力数据
+// 核心竞争力数据 - 聚焦能力模型
 const competencies = [
   {
-    tag: 'AI 技术边界与落地', tagColor: 'blue',
-    icon: BotIcon, title: 'RPA+AI 智能客服',
-    desc: '熟悉 LLM/RPA 边界，设计低代码自动化方案，实现客服工单自动分流与处理。',
-    metric: '70', metricUnit: '%', metricLabel: '客服日均处理量提升',
-    footer: { icon: TrendingDownIcon, text: '人力成本降低 23.5%' }
+    tag: '技术理解力', tagColor: 'blue',
+    icon: BotIcon, title: 'AI/RPA 技术边界把控',
+    desc: '能准确判断 LLM、RPA、规则引擎的能力边界，为业务场景匹配最优技术方案，避免过度工程化。',
+    tags: ['Prompt工程', '低代码平台', '自动化流程'],
+    footer: { icon: CheckCircleIcon, text: '技术可行性评估' }
   },
   {
-    tag: '数据洞察与 ROI', tagColor: 'indigo',
-    icon: DatabaseIcon, title: '财务数据中台',
-    desc: '拒绝虚荣指标，构建以 ROI 为核心的监控体系，打通业财数据孤岛，赋能决策。',
-    metric: '4', metricUnit: '小时', metricLabel: '报表生成时效 (原3天)',
-    footer: { icon: CheckCircleIcon, text: '数据准确率达 99%' }
+    tag: '数据思维', tagColor: 'indigo',
+    icon: DatabaseIcon, title: '指标体系构建能力',
+    desc: '擅长从业务目标反推核心指标，拒绝虚荣指标，建立可量化、可追踪、可归因的数据监控体系。',
+    tags: ['北极星指标', 'ROI导向', '数据埋点'],
+    footer: { icon: CodeIcon, text: 'SQL / Python / BI工具' }
   },
   {
-    tag: '业务流程重构', tagColor: 'slate',
-    icon: GitMergeIcon, title: '标准化方法论',
-    desc: '深度拆解复杂业务痛点，运用 RICE 模型定优劣，将非标线下业务抽象为标准化产品。',
-    tags: ['闭环思维', '结果导向'],
-    footer: { icon: CodeIcon, text: 'Axure / Python / SQL' }
+    tag: '业务抽象力', tagColor: 'slate',
+    icon: GitMergeIcon, title: '复杂流程标准化',
+    desc: '能将跨部门、非标准化的线下业务拆解为可复用模块，输出 SOP 并推动系统化落地。',
+    tags: ['流程再造', 'RICE优先级', '闭环思维'],
+    footer: { icon: TrendingDownIcon, text: '从0到1产品闭环经验' }
   }
 ]
 
@@ -97,8 +97,8 @@ const selfEvaluations = [
 
 // 技能栈
 const skills = {
-  design: ['用户访谈', 'RICE模型', 'Axure/Figma', 'PRD文档'],
-  tech: ['SQL/Python', 'Tableau', '数据仓库', 'RPA+AI']
+  design: ['RICE优先级模型', 'Axure/Figma', '数据埋点设计'],
+  tech: ['SQL/Python', 'Tableau/FineBI', 'RPA+AI Agent', '数仓建模']
 }
 
 const copyEmail = () => {
@@ -119,6 +119,8 @@ const filteredShowcase = () => {
 const navigateToProject = (item) => {
   if (item.path) {
     router.push(item.path)
+  } else if (item.externalUrl) {
+    window.open(item.externalUrl, '_blank')
   }
 }
 
@@ -162,7 +164,7 @@ onMounted(() => {
       
       <div class="hero-content">
         <div class="avatar-wrapper reveal" data-reveal-id="avatar">
-          <img src="https://placehold.co/160x160/2563eb/ffffff?text=HJL" alt="胡家乐" class="avatar" />
+          <img src="/hjl.png" alt="胡家乐" class="avatar" />
         </div>
         <h1 class="hero-title reveal" data-reveal-id="title">胡家乐</h1>
         <p class="hero-subtitle reveal" data-reveal-id="subtitle">
@@ -239,18 +241,18 @@ onMounted(() => {
           <div 
             v-for="item in filteredShowcase()" 
             :key="item.id" 
-            class="showcase-card"
-            :class="{ clickable: item.path }"
+            class="showcase-card clickable"
             @click="navigateToProject(item)"
           >
+            <div class="showcase-badge">
+              <span v-if="item.badge" class="badge-prototype" :class="{ 'badge-gray': !item.path }">{{ item.badge }}</span>
+              <span class="badge-click">点击查看 →</span>
+            </div>
             <div class="showcase-icon" :class="`icon-${item.color}`">
               <component :is="item.icon" :size="16" />
             </div>
             <h3>{{ item.title }}</h3>
             <p>{{ item.desc }}</p>
-            <div v-if="!item.path" class="showcase-lock">
-              <LockIcon :size="10" /> 敬请期待
-            </div>
           </div>
         </div>
       </section>
@@ -440,7 +442,6 @@ onMounted(() => {
   border-radius: 50%;
   background: rgba(255,255,255,0.1);
   border: 1px solid rgba(255,255,255,0.2);
-  margin-bottom: 1.25rem;
 }
 .avatar {
   width: 6rem; height: 6rem;
@@ -745,6 +746,41 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 0.25rem;
+}
+
+/* 作品卡片徽章 */
+.showcase-badge {
+  position: absolute;
+  top: 0.5rem; right: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.25rem;
+}
+.badge-prototype {
+  font-size: 0.5rem;
+  font-weight: 600;
+  color: white;
+  background: linear-gradient(135deg, #2563eb, #4f46e5);
+  padding: 0.125rem 0.375rem;
+  border-radius: 0.25rem;
+  box-shadow: 0 2px 4px rgba(37, 99, 235, 0.3);
+}
+.badge-prototype.badge-gray {
+  background: linear-gradient(135deg, #64748b, #475569);
+  box-shadow: 0 2px 4px rgba(71, 85, 105, 0.3);
+}
+.badge-click {
+  font-size: 0.5rem;
+  font-weight: 500;
+  color: #2563eb;
+  opacity: 0;
+  transform: translateX(-4px);
+  transition: all 0.3s;
+}
+.showcase-card:hover .badge-click {
+  opacity: 1;
+  transform: translateX(0);
 }
 
 /* 双栏布局 */
