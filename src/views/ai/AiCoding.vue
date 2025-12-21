@@ -5,12 +5,12 @@ const tools = [
   {
     title: '窗口控制器',
     desc: '一键管理桌面窗口布局，提升多任务处理效率。',
-    link: '#'
+    link: '/downloads/窗口控制器.exe'
   },
   {
     title: 'ReadBook',
     desc: '沉浸式电子书阅读器，支持多种格式与笔记功能。',
-    link: '#'
+    link: '/downloads/readbook.exe'
   },
   {
     title: '智能直播助手',
@@ -25,7 +25,7 @@ const tools = [
   {
     title: '智聘',
     desc: '智能简历解析与人岗匹配工具，自动化招聘流程。',
-    link: '#'
+    link: '/downloads/智聘.exe'
   }
 ]
 </script>
