@@ -3,48 +3,44 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import {
   BriefcaseIcon, SchoolIcon, MailIcon, CopyIcon, CheckIcon, MapPinIcon,
-  BotIcon, DatabaseIcon, GitMergeIcon, LayoutGridIcon, BarChartBigIcon,
-  GitForkIcon, AppWindowIcon, FileEditIcon, TargetIcon, ZapIcon, LayersIcon,
+  BotIcon, LayoutGridIcon, FileEditIcon, TargetIcon, ZapIcon, LayersIcon,
   AlertCircleIcon, BrainIcon, UserCheckIcon, CpuIcon, TrendingDownIcon,
-  CheckCircleIcon, CodeIcon, LockIcon
+  CheckCircleIcon, ArrowRightIcon, BookOpenIcon
 } from 'lucide-vue-next'
 
 const router = useRouter()
 const emailCopied = ref(false)
-const activeFilter = ref('all')
 const revealedElements = ref(new Set())
 
-// 作品展示数据
-const showcaseItems = [
-  { id: 1, title: '财务数据中心', desc: '数据中台', icon: BarChartBigIcon, color: 'indigo', category: 'b-side', path: '/finance', badge: '高保真原型' },
-  { id: 2, title: 'AI智能助手', desc: 'AI Agent搭建', icon: BotIcon, color: 'emerald', category: 'ai', externalUrl: 'https://www.baidu.com', badge: 'AI Agent智能体' },
-  { id: 3, title: '思维导图软件', desc: '效率工具', icon: GitForkIcon, color: 'amber', category: 'tools', externalUrl: 'https://www.baidu.com', badge: '效率工具' },
-  { id: 4, title: '窗口控制器', desc: '交互组件', icon: AppWindowIcon, color: 'purple', category: 'tools', externalUrl: 'https://www.baidu.com', badge: '效率工具' },
-  { id: 5, title: '文档编辑器', desc: 'AI写作', icon: FileEditIcon, color: 'rose', category: 'tools', externalUrl: 'https://www.baidu.com', badge: '效率工具' }
-]
-
-// 核心竞争力数据 - 聚焦能力模型
-const competencies = [
+// 作品交付物（首页三卡）
+const deliverables = [
   {
-    tag: '技术理解力', tagColor: 'blue',
-    icon: BotIcon, title: 'AI/RPA 技术边界把控',
-    desc: '能准确判断 LLM、RPA、规则引擎的能力边界，为业务场景匹配最优技术方案，避免过度工程化。',
-    tags: ['Prompt工程', '低代码平台', '自动化流程'],
-    footer: { icon: CheckCircleIcon, text: '技术可行性评估' }
+    tag: '作品集', tagColor: 'indigo',
+    icon: LayoutGridIcon,
+    title: '高保真原型图',
+    desc: '可交互原型演示与信息架构，突出流程闭环与可用性。',
+    tags: ['信息架构', '交互流程', '高保真页面'],
+    footer: { icon: ArrowRightIcon, text: '查看原型演示' },
+    path: '/finance'
   },
   {
-    tag: '数据思维', tagColor: 'indigo',
-    icon: DatabaseIcon, title: '指标体系构建能力',
-    desc: '擅长从业务目标反推核心指标，拒绝虚荣指标，建立可量化、可追踪、可归因的数据监控体系。',
-    tags: ['北极星指标', 'ROI导向', '数据埋点'],
-    footer: { icon: CodeIcon, text: 'SQL / Python / BI工具' }
+    tag: '作品集', tagColor: 'slate',
+    icon: FileEditIcon,
+    title: 'PRD 文档',
+    desc: '需求背景、目标、方案与验收口径，强调可落地与可衡量。',
+    tags: ['需求拆解', '验收标准', '数据口径'],
+    footer: { icon: AlertCircleIcon, text: '维护中' },
+    path: 'https://baidu.com',
+    disabled: true
   },
   {
-    tag: '业务抽象力', tagColor: 'slate',
-    icon: GitMergeIcon, title: '复杂流程标准化',
-    desc: '能将跨部门、非标准化的线下业务拆解为可复用模块，输出 SOP 并推动系统化落地。',
-    tags: ['流程再造', 'RICE优先级', '闭环思维'],
-    footer: { icon: TrendingDownIcon, text: '从0到1产品闭环经验' }
+    tag: '作品集', tagColor: 'emerald',
+    icon: BotIcon,
+    title: 'AI Agent',
+    desc: 'AI Agent / 自动化方案演示，体现提效与流程重构能力。',
+    tags: ['AI Agent', '工作流', 'AI coding'],
+    footer: { icon: ArrowRightIcon, text: '查看应用列表' },
+    path: '/ai'
   }
 ]
 
@@ -62,10 +58,10 @@ const projects = [
       { icon: ZapIcon, label: '方案', text: '搭建聚水潭到飞书的数据管道，利用 RPA 抓取订单，AI 识别意图并智能分流。' }
     ],
     metrics: [
-      { value: '30min', label: '响应时效 (原24h)' },
-      { value: '+70%', label: '客服人效提升' },
       { value: '76.7%', label: '重复工作自动化' },
-      { value: '23.5%', label: '人力成本降低' }
+      { value: '23.5%', label: '人力成本降低' },
+      { value: '+70%', label: '客服人效提升' },
+      { value: '30min', label: '响应时效 (原24h)' }
     ]
   },
   {
@@ -80,10 +76,10 @@ const projects = [
       { icon: LayersIcon, label: '方案', text: '构建从数仓建模、元规则 ETL 到前端看板的全链路体系，实现业财贯通。' }
     ],
     metrics: [
+      { value: '99%', label: '数据准确率' },
       { value: '83.3%', label: '报表效率提升' },
       { value: 'T+1', label: '数据时效性' },
-      { value: '99%', label: '数据准确率' },
-      { value: '2人', label: '人力节省' }
+      { value: '10+个', label: '指标统一' }
     ]
   }
 ]
@@ -95,10 +91,16 @@ const selfEvaluations = [
   { icon: TargetIcon, title: '结果导向', text: '聚焦量化成果，用数据证明价值。' }
 ]
 
+// 产品方法论
+const methodologies = {
+  design: ['RICE模型', 'KANO模型', 'MVP思维'],
+  tech: ['敏捷开发', '数据治理', 'A/B测试']
+}
+
 // 技能栈
 const skills = {
-  design: ['RICE优先级模型', 'Axure/Figma', '数据埋点设计'],
-  tech: ['SQL/Python', 'Tableau/FineBI', 'RPA+AI Agent', '数仓建模']
+  design: ['Axure', 'Figma'],
+  tech: ['SQL', 'Python', 'Excel', 'Tableau']
 }
 
 const copyEmail = () => {
@@ -107,20 +109,24 @@ const copyEmail = () => {
   setTimeout(() => { emailCopied.value = false }, 2000)
 }
 
-const filterProjects = (category) => {
-  activeFilter.value = category
+const navigateToDeliverable = (item) => {
+  if (item.disabled) {
+    alert('维护中，暂时不可查看')
+    return
+  }
+  if (item?.path) {
+    if (item.path.startsWith('http')) {
+      window.open(item.path, '_blank')
+    } else {
+      router.push(item.path)
+    }
+  }
 }
 
-const filteredShowcase = () => {
-  if (activeFilter.value === 'all') return showcaseItems
-  return showcaseItems.filter(item => item.category === activeFilter.value)
-}
-
-const navigateToProject = (item) => {
-  if (item.path) {
-    router.push(item.path)
-  } else if (item.externalUrl) {
-    window.open(item.externalUrl, '_blank')
+const scrollToSection = (id) => {
+  const element = document.querySelector(id)
+  if (element) {
+    element.scrollIntoView({ behavior: 'smooth' })
   }
 }
 
@@ -149,9 +155,9 @@ onMounted(() => {
           胡家乐 Portfolio
         </div>
         <div class="nav-links">
-          <a href="#showcase">作品展示</a>
-          <a href="#projects">项目经历</a>
-          <a href="#skills">专业技能</a>
+          <a href="#deliverables" @click.prevent="scrollToSection('#deliverables')">作品集</a>
+          <a href="#projects" @click.prevent="scrollToSection('#projects')">项目经历</a>
+          <a href="#skills" @click.prevent="scrollToSection('#skills')">专业技能</a>
         </div>
       </div>
     </nav>
@@ -191,10 +197,16 @@ onMounted(() => {
 
     <!-- 主内容区 -->
     <main class="main-content">
-      <!-- 核心竞争力 -->
-      <section class="competency-section reveal" data-reveal-id="competency">
+      <!-- 作品交付物（优先展示） -->
+      <section id="deliverables" class="competency-section reveal" data-reveal-id="competency">
         <div class="competency-grid">
-          <div v-for="(item, index) in competencies" :key="index" class="competency-card">
+          <div
+            v-for="(item, index) in deliverables"
+            :key="index"
+            class="competency-card clickable"
+            :class="`card-${item.tagColor}`"
+            @click="navigateToDeliverable(item)"
+          >
             <span class="ability-tag" :class="`tag-${item.tagColor}`">{{ item.tag }}</span>
             <div class="competency-header">
               <div class="competency-icon" :class="`icon-${item.tagColor}`">
@@ -224,39 +236,6 @@ onMounted(() => {
         </div>
       </section>
 
-      <!-- 作品展示 -->
-      <section id="showcase" class="showcase-section reveal" data-reveal-id="showcase">
-        <div class="section-header">
-          <h2><LayoutGridIcon :size="20" /> 作品集</h2> 
-          <div class="filter-tabs">
-            <button 
-              v-for="tab in [{ key: 'all', label: '全部' }, { key: 'b-side', label: 'B端/数据' }, { key: 'ai', label: 'AI应用' }, { key: 'tools', label: '效率工具' }]"
-              :key="tab.key"
-              :class="['tab-btn', { active: activeFilter === tab.key }]"
-              @click="filterProjects(tab.key)"
-            >{{ tab.label }}</button>
-          </div>
-        </div>
-        <div class="showcase-grid">
-          <div 
-            v-for="item in filteredShowcase()" 
-            :key="item.id" 
-            class="showcase-card clickable"
-            @click="navigateToProject(item)"
-          >
-            <div class="showcase-badge">
-              <span v-if="item.badge" class="badge-prototype" :class="{ 'badge-gray': !item.path }">{{ item.badge }}</span>
-              <span class="badge-click">点击查看 →</span>
-            </div>
-            <div class="showcase-icon" :class="`icon-${item.color}`">
-              <component :is="item.icon" :size="16" />
-            </div>
-            <h3>{{ item.title }}</h3>
-            <p>{{ item.desc }}</p>
-          </div>
-        </div>
-      </section>
-
       <!-- 双栏布局 -->
       <div class="two-column">
         <!-- 左栏：项目经验 -->
@@ -265,7 +244,7 @@ onMounted(() => {
             <BriefcaseIcon :size="20" /> 核心项目经验
           </h2>
           
-          <article v-for="(project, index) in projects" :key="index" class="project-card reveal" :data-reveal-id="`project-${index}`">
+          <article v-for="(project, index) in projects" :key="index" class="project-card reveal" :class="`border-${project.roleColor}`" :data-reveal-id="`project-${index}`">
             <div class="project-header">
               <div>
                 <h3>{{ project.title }}</h3>
@@ -291,7 +270,7 @@ onMounted(() => {
             
             <div class="metrics-grid">
               <div v-for="(m, i) in project.metrics" :key="i" class="metric-box">
-                <div class="metric-value">{{ m.value }}</div>
+                <div class="metric-value" :class="`text-${project.roleColor}`">{{ m.value }}</div>
                 <div class="metric-label">{{ m.label }}</div>
               </div>
             </div>
@@ -312,8 +291,24 @@ onMounted(() => {
           </div>
 
           <!-- 技能栈 -->
+          <div class="side-card reveal" data-reveal-id="methodologies">
+            <h3><BookOpenIcon :size="20" /> 产品方法论</h3>
+            <div class="skill-group">
+              <h4>产品设计</h4>
+              <div class="skill-tags">
+                <span v-for="item in methodologies.design" :key="item">{{ item }}</span>
+              </div>
+            </div>
+            <div class="skill-group">
+              <h4>数据 & 技术</h4>
+              <div class="skill-tags">
+                <span v-for="item in methodologies.tech" :key="item">{{ item }}</span>
+              </div>
+            </div>
+          </div>
+
           <div id="skills" class="side-card reveal" data-reveal-id="skills">
-            <h3><CpuIcon :size="20" /> 技能栈</h3>
+            <h3><CpuIcon :size="20" /> 技术栈</h3>
             <div class="skill-group">
               <h4>产品设计</h4>
               <div class="skill-tags">
@@ -321,7 +316,7 @@ onMounted(() => {
               </div>
             </div>
             <div class="skill-group">
-              <h4>数据 & 技术</h4>
+              <h4>数据分析与可视化</h4>
               <div class="skill-tags">
                 <span v-for="skill in skills.tech" :key="skill">{{ skill }}</span>
               </div>
@@ -453,6 +448,7 @@ onMounted(() => {
   font-size: 2.5rem;
   font-weight: 800;
   margin-bottom: 0.75rem;
+  margin-top: 0.5rem;
 }
 .hero-subtitle {
   font-size: 1.125rem;
@@ -479,19 +475,30 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  background: rgba(255,255,255,0.1);
   padding: 0.5rem 1rem;
   border-radius: 9999px;
-  border: 1px solid rgba(255,255,255,0.1);
-  transition: background 0.2s;
+  border: 1px solid rgba(255,255,255,0.2);
+  transition: all 0.3s ease;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
 }
 .hero-tag-btn {
   cursor: pointer;
   color: white;
 }
-.hero-tag-btn:hover { background: rgba(255,255,255,0.15); }
+.hero-tag-btn:hover { 
+  background: rgba(255,255,255,0.25);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 15px rgba(0,0,0,0.1);
+}
 .hero-tag-btn.copied {
   background: rgba(34, 197, 94, 0.2);
+  border-color: rgba(34, 197, 94, 0.3);
+}
+.hero-tag:not(.hero-tag-btn):hover {
+  background: rgba(255,255,255,0.25);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 15px rgba(0,0,0,0.1);
   border-color: rgba(34, 197, 94, 0.3);
 }
 .copy-icon { opacity: 0.6; }
@@ -521,18 +528,23 @@ onMounted(() => {
 }
 .competency-card {
   background: rgba(255,255,255,0.98);
-  border: 1px solid rgba(255,255,255,0.6);
+  border: 1px solid rgba(226, 232, 240, 0.8);
   border-radius: 1rem;
   padding: 1.25rem;
   box-shadow: 0 10px 30px -5px rgba(0,0,0,0.08);
-  transition: transform 0.3s, box-shadow 0.3s;
+  transition: all 0.3s;
   display: flex;
   flex-direction: column;
+  position: relative;
+  overflow: hidden;
 }
+.competency-card.clickable { cursor: pointer; }
 .competency-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 20px 40px -5px rgba(0,0,0,0.12);
 }
+.card-indigo:hover { border-color: #818cf8; box-shadow: 0 20px 40px -5px rgba(79, 70, 229, 0.15); }
+.card-blue:hover { border-color: #60a5fa; box-shadow: 0 20px 40px -5px rgba(37, 99, 235, 0.15); }
+.card-emerald:hover { border-color: #34d399; box-shadow: 0 20px 40px -5px rgba(5, 150, 105, 0.15); }
 
 .ability-tag {
   font-size: 0.625rem;
@@ -546,6 +558,7 @@ onMounted(() => {
 }
 .tag-blue { background: #dbeafe; color: #1d4ed8; }
 .tag-indigo { background: #e0e7ff; color: #4338ca; }
+.tag-emerald { background: #e8fff3; color: #047857; }
 .tag-slate { background: #f1f5f9; color: #475569; }
 
 .competency-header {
@@ -597,6 +610,7 @@ onMounted(() => {
 }
 
 .text-blue { color: #2563eb; }
+.text-purple { color: #9333ea; }
 .text-blue-light { color: #60a5fa; }
 .text-indigo { color: #4f46e5; }
 .text-indigo-light { color: #818cf8; }
@@ -622,166 +636,24 @@ onMounted(() => {
   font-weight: 500;
 }
 .competency-footer {
-  padding-top: 0.75rem;
+  background: #f8fafc;
+  margin: 1rem -1.25rem -1.25rem;
+  padding: 0.75rem 1.25rem;
   border-top: 1px solid #f1f5f9;
-  margin-top: auto;
   font-size: 0.75rem;
-  color: #475569;
+  color: #64748b;
   font-weight: 500;
   display: flex;
   align-items: center;
   gap: 0.375rem;
-}
-.footer-icon { color: #22c55e; }
-
-/* 作品展示 */
-.showcase-section { margin-bottom: 2.5rem; }
-.section-header {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 1.25rem;
-  padding: 0 0.5rem;
-  gap: 1rem;
-}
-.section-header h2 {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: #1e293b;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-.section-header h2 svg { color: #2563eb; }
-.filter-tabs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
-
-.tab-btn {
-  padding: 0.375rem 1rem;
-  border-radius: 9999px;
-  border: 1px solid #e2e8f0;
-  background: white;
-  color: #475569;
-  font-size: 0.75rem;
-  font-weight: 500;
-  cursor: pointer;
   transition: all 0.2s;
 }
-.tab-btn:hover { border-color: #2563eb; color: #2563eb; }
-.tab-btn.active {
-  background: #2563eb;
-  color: white;
-  border-color: transparent;
-  box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.3);
+.competency-card:hover .competency-footer {
+  background: #f1f5f9;
+  color: #334155;
 }
-.showcase-grid {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 1rem;
-}
-@media (max-width: 1024px) {
-  .showcase-grid { grid-template-columns: repeat(3, 1fr); }
-}
-@media (max-width: 640px) {
-  .showcase-grid { grid-template-columns: repeat(2, 1fr); }
-}
-.showcase-card {
-  background: white;
-  padding: 1rem;
-  border-radius: 0.75rem;
-  border: 1px solid #f1f5f9;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-  text-align: center;
-  transition: all 0.3s;
-  position: relative;
-}
-.showcase-card.clickable { cursor: pointer; }
-.showcase-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 24px -5px rgba(0,0,0,0.08);
-}
-.showcase-card::after {
-  content: '';
-  position: absolute;
-  bottom: 0; left: 0;
-  width: 100%; height: 3px;
-  background: linear-gradient(to right, #2563eb, #4f46e5);
-  transform: scaleX(0);
-  transition: transform 0.4s;
-  transform-origin: left;
-}
-.showcase-card:hover::after { transform: scaleX(1); }
-.showcase-icon {
-  width: 2.25rem; height: 2.25rem;
-  border-radius: 0.5rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0 auto 0.5rem;
-  transition: transform 0.3s;
-}
-.showcase-card:hover .showcase-icon { transform: scale(1.1); }
-
-.showcase-card h3 {
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: #1e293b;
-  margin-bottom: 0.125rem;
-  transition: color 0.2s;
-}
-.showcase-card:hover h3 { color: #2563eb; }
-.showcase-card p {
-  font-size: 0.625rem;
-  color: #94a3b8;
-}
-.showcase-lock {
-  position: absolute;
-  top: 0.5rem; right: 0.5rem;
-  font-size: 0.5rem;
-  color: #94a3b8;
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-}
-
-/* 作品卡片徽章 */
-.showcase-badge {
-  position: absolute;
-  top: 0.5rem; right: 0.5rem;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 0.25rem;
-}
-.badge-prototype {
-  font-size: 0.5rem;
-  font-weight: 600;
-  color: white;
-  background: linear-gradient(135deg, #2563eb, #4f46e5);
-  padding: 0.125rem 0.375rem;
-  border-radius: 0.25rem;
-  box-shadow: 0 2px 4px rgba(37, 99, 235, 0.3);
-}
-.badge-prototype.badge-gray {
-  background: linear-gradient(135deg, #64748b, #475569);
-  box-shadow: 0 2px 4px rgba(71, 85, 105, 0.3);
-}
-.badge-click {
-  font-size: 0.5rem;
-  font-weight: 500;
-  color: #2563eb;
-  opacity: 0;
-  transform: translateX(-4px);
-  transition: all 0.3s;
-}
-.showcase-card:hover .badge-click {
-  opacity: 1;
-  transform: translateX(0);
-}
+.footer-icon { color: #94a3b8; transition: transform 0.2s; }
+.competency-card:hover .footer-icon { transform: translateX(4px); color: inherit; }
 
 /* 双栏布局 */
 .two-column {
@@ -810,11 +682,13 @@ onMounted(() => {
   background: white;
   border-radius: 1rem;
   border: 1px solid #f1f5f9;
-  border-left: 4px solid #3b82f6;
+  border-left: 4px solid transparent;
   box-shadow: 0 1px 3px rgba(0,0,0,0.05);
   padding: 1.25rem;
   transition: all 0.3s;
 }
+.border-blue { border-left-color: #3b82f6; }
+.border-purple { border-left-color: #9333ea; }
 .project-card:hover {
   transform: translateY(-4px);
   box-shadow: 0 12px 24px -5px rgba(0,0,0,0.08);
@@ -922,11 +796,9 @@ onMounted(() => {
 .metric-box .metric-value {
   font-size: 1.125rem;
   font-weight: 700;
-  color: #2563eb;
   margin-bottom: 0.125rem;
   transition: transform 0.2s;
 }
-.metric-box:hover .metric-value { transform: scale(1.1); }
 .metric-box .metric-label {
   font-size: 0.625rem;
   color: #64748b;

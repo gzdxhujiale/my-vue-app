@@ -25,11 +25,27 @@ import ConfigManagement from '../views/finance/config/ConfigManagement.vue'
 import ConfigNotification from '../views/finance/config/ConfigNotification.vue'
 import ConfigDictionary from '../views/finance/config/ConfigDictionary.vue'
 
+// AI 工具布局
+import AiLayout from '../views/ai/AiLayout.vue'
+import AiAgent from '../views/ai/AiAgent.vue'
+import AiCoding from '../views/ai/AiCoding.vue'
+import AiWorkflow from '../views/ai/AiWorkflow.vue'
+
 const routes = [
   {
     path: '/',
     name: 'Portfolio',
     component: Portfolio
+  },
+  {
+    path: '/ai',
+    component: AiLayout,
+    redirect: '/ai/agent',
+    children: [
+      { path: 'agent', name: 'AiAgent', component: AiAgent },
+      { path: 'coding', name: 'AiCoding', component: AiCoding },
+      { path: 'workflow', name: 'AiWorkflow', component: AiWorkflow }
+    ]
   },
   {
     path: '/finance',

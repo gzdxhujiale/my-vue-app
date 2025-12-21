@@ -1,5 +1,5 @@
 <template>
-  <div class="rbac-container">
+  <a-layout class="rbac-layout">
     <div class="header-section">
       <div class="header-content">
         <div class="title-group">
@@ -20,65 +20,66 @@
       </div>
     </div>
 
-    <div class="content-wrapper">
-      <a-row :gutter="16" class="main-row" style="flex-wrap: nowrap;">
-        <!-- 左侧角色列表 -->
-        <a-col flex="280px" class="h-full">
-          <a-card class="list-card h-full" :body-style="{ padding: '0' }">
-            <div class="list-header">
-              <h3 class="list-title">角色列表</h3>
-              <span class="list-subtitle">点击查看详情</span>
-            </div>
-            <div class="role-list custom-scroll">
-              <div 
-                v-for="role in roles" 
-                :key="role.id" 
-                class="role-item"
-                :class="{ 'role-active': selectedRole?.id === role.id }"
-                @click="selectRole(role)"
+    <a-layout class="page-body">
+      <!-- 左侧角色列表 -->
+      <a-layout-sider :width="280" class="role-sider">
+        <div class="list-header">
+          <h3 class="list-title">角色列表</h3>
+          <span class="list-subtitle">点击查看详情</span>
+        </div>
+        <div class="role-list custom-scroll">
+          <div 
+            v-for="role in roles" 
+            :key="role.id" 
+            class="role-item"
+            :class="{ 'role-active': selectedRole?.id === role.id }"
+            @click="selectRole(role)"
+          >
+            <div class="role-item-inner">
+              <a-avatar 
+                :size="32" 
+                :style="{ backgroundColor: selectedRole?.id === role.id ? 'rgb(var(--primary-6))' : '#F2F3F5', color: selectedRole?.id === role.id ? '#FFF' : '#4E5969' }"
+                class="role-avatar"
               >
-                <div class="role-item-inner">
-                  <a-avatar 
-                    :size="32" 
-                    :style="{ backgroundColor: selectedRole?.id === role.id ? 'rgb(var(--primary-6))' : '#F2F3F5', color: selectedRole?.id === role.id ? '#FFF' : '#4E5969' }"
-                    class="role-avatar"
-                  >
-                    {{ role.name[0] }}
-                  </a-avatar>
-                  <div class="role-info">
-                    <div class="role-name">{{ role.name }}</div>
-                    <div class="role-meta">{{ role.desc }}</div>
-                  </div>
-                  <div class="role-count">
-                    <icon-user size="14" />
-                    <span>{{ role.userCount }}</span>
-                  </div>
-                </div>
+                {{ role.name[0] }}
+              </a-avatar>
+              <div class="role-info">
+                <div class="role-name">{{ role.name }}</div>
+                <div class="role-meta">{{ role.desc }}</div>
+              </div>
+              <div class="role-count">
+                <icon-user size="14" />
+                <span>{{ role.userCount }}</span>
               </div>
             </div>
-          </a-card>
-        </a-col>
+          </div>
+        </div>
+      </a-layout-sider>
 
-        <!-- 右侧角色详情 -->
-        <a-col flex="auto" class="h-full" style="overflow: hidden; min-width: 0;">
-          <a-card class="detail-card h-full" v-if="selectedRole">
-            <div class="detail-header">
+      <!-- 右侧角色详情 -->
+      <a-layout-content class="content-area">
+        <div class="detail-card h-full" v-if="selectedRole">
+          <div class="detail-header">
+            <div class="detail-header-top">
               <div class="detail-title-group">
                 <div class="role-icon-wrapper large" :class="getColorClass(selectedRole.color)">
-                  <icon-safe size="24" />
+                  <icon-safe size="28" />
                 </div>
                 <div>
-                  <h2 class="detail-title">{{ selectedRole.name }}</h2>
+                  <div class="flex-row-center">
+                    <h2 class="detail-title">{{ selectedRole.name }}</h2>
+                    <a-tag v-if="selectedRole.isSystem" size="small" class="ml-2 system-tag">系统内置</a-tag>
+                  </div>
                   <p class="detail-code">{{ selectedRole.code }}</p>
                 </div>
               </div>
               <div class="detail-actions">
-                <a-button type="outline" class="mr-2" @click="openModal('edit', selectedRole)">
+                <a-button type="secondary" class="mr-2" @click="openModal('edit', selectedRole)">
                   <template #icon><icon-edit /></template> 编辑
                 </a-button>
                 <a-button 
                   v-if="!selectedRole.isSystem" 
-                  type="outline" 
+                  type="secondary" 
                   status="danger"
                   @click="handleDelete(selectedRole)"
                 >
@@ -86,68 +87,95 @@
                 </a-button>
               </div>
             </div>
+            <div class="role-desc-box">
+              {{ selectedRole.desc || '暂无描述' }}
+            </div>
+          </div>
 
-            <div class="detail-content">
-              <div class="detail-section">
-                <div class="section-label">角色描述</div>
-                <p class="section-text">{{ selectedRole.desc }}</p>
-              </div>
-
-              <div class="detail-section bordered">
-                <div class="section-header">
+          <div class="detail-content custom-scroll">
+            <div class="section-block">
+              <div class="section-header">
+                <div class="section-title-group">
                   <icon-lock class="section-icon text-indigo" />
                   <span class="section-title-text">功能权限</span>
                 </div>
-                <div class="permission-tags">
-                  <template v-if="selectedRole.permissions.includes('all')">
-                    <a-tag color="red" class="perm-tag">
-                      <template #icon><icon-safe /></template>
-                      拥有所有功能权限
-                    </a-tag>
-                  </template>
-                  <template v-else-if="selectedRole.permissions.length > 0">
+                <span class="section-meta" v-if="!selectedRole.permissions.includes('all')">
+                  已授权 {{ selectedRole.permissions.length }} 项
+                </span>
+              </div>
+              
+              <div class="permission-box" :class="{ 'is-admin': selectedRole.permissions.includes('all') }">
+                <template v-if="selectedRole.permissions.includes('all')">
+                  <div class="admin-state">
+                    <icon-safe size="32" class="mb-2" />
+                    <div class="font-bold">超级管理员权限</div>
+                    <div class="text-xs opacity-80 mt-1">拥有系统所有功能模块的操作权限</div>
+                  </div>
+                </template>
+                <template v-else-if="selectedRole.permissions.length > 0">
+                  <div class="perm-tags-wrapper">
                     <a-tag v-for="perm in selectedRole.permissions" :key="perm" color="arcoblue" class="perm-tag">
                       {{ perm }}
                     </a-tag>
-                  </template>
-                  <span v-else class="empty-text">暂无功能权限</span>
-                </div>
-              </div>
-
-              <div class="data-perm-grid">
-                <div class="detail-section bordered">
-                  <div class="section-header">
-                    <icon-filter class="section-icon text-blue" />
-                    <span class="section-title-text">行级权限</span>
                   </div>
-                  <div class="perm-box bg-blue-light">
-                    <div class="perm-name text-blue">{{ getRowPermName(selectedRole.rowPermissionId) }}</div>
-                    <div class="perm-desc text-blue-sub">{{ getRowPermDesc(selectedRole.rowPermissionId) }}</div>
-                  </div>
-                </div>
-                <div class="detail-section bordered">
-                  <div class="section-header">
-                    <icon-layout class="section-icon text-green" />
-                    <span class="section-title-text">列级权限</span>
-                  </div>
-                  <div class="perm-box bg-green-light">
-                    <div class="perm-name text-green">{{ getColPermName(selectedRole.columnPermissionId) }}</div>
-                    <div class="perm-desc text-green-sub">{{ getColPermDesc(selectedRole.columnPermissionId) }}</div>
-                  </div>
+                </template>
+                <div v-else class="empty-perm">
+                  暂无功能权限
                 </div>
               </div>
             </div>
-          </a-card>
-          
-          <div v-else class="empty-state">
-            <div class="empty-content">
-              <icon-safe size="48" class="empty-icon" />
-              <p>请从左侧选择一个角色</p>
+
+            <div class="section-block">
+              <div class="section-header">
+                <div class="section-title-group">
+                  <icon-filter class="section-icon text-green" />
+                  <span class="section-title-text">数据权限</span>
+                </div>
+              </div>
+              
+              <div class="data-perm-cards">
+                <!-- Row Card -->
+                <div class="perm-card row-card">
+                  <div class="card-icon-bg bg-blue-light text-blue">
+                    <icon-filter size="20" />
+                  </div>
+                  <div class="card-main">
+                    <div class="card-label text-blue">行级范围</div>
+                    <div class="card-value">{{ getRowPermName(selectedRole.rowPermissionId) }}</div>
+                    <div class="card-desc">{{ getRowPermDesc(selectedRole.rowPermissionId) }}</div>
+                  </div>
+                  <div class="card-status">
+                    <icon-check class="text-blue" />
+                  </div>
+                </div>
+                
+                <!-- Col Card -->
+                <div class="perm-card col-card">
+                  <div class="card-icon-bg bg-green-light text-green">
+                    <icon-layout size="20" />
+                  </div>
+                  <div class="card-main">
+                    <div class="card-label text-green">列级字段</div>
+                    <div class="card-value">{{ getColPermName(selectedRole.columnPermissionId) }}</div>
+                    <div class="card-desc">{{ getColPermDesc(selectedRole.columnPermissionId) }}</div>
+                  </div>
+                  <div class="card-status">
+                    <icon-check class="text-green" />
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
-        </a-col>
-      </a-row>
-    </div>
+        </div>
+        
+        <div v-else class="empty-state">
+          <div class="empty-content">
+            <icon-safe size="48" class="empty-icon" />
+            <p>请从左侧选择一个角色</p>
+          </div>
+        </div>
+      </a-layout-content>
+    </a-layout>
 
     <!-- 编辑/新增弹窗 -->
     <a-modal
@@ -247,7 +275,7 @@
         </a-tabs>
       </a-form>
     </a-modal>
-  </div>
+  </a-layout>
 </template>
 
 <script setup>
@@ -489,17 +517,19 @@ const handleDelete = (role) => {
 </script>
 
 <style scoped>
-.rbac-container {
-  min-height: 100vh;
-  padding: 12px 24px;
+.rbac-layout {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
   background-color: var(--color-fill-2);
 }
 
 .header-section {
-  margin: -12px -24px 24px -24px;
   padding: 16px 24px;
   background-color: #fff;
   border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
+  margin-bottom: 16px;
 }
 
 .header-content {
@@ -539,12 +569,31 @@ const handleDelete = (role) => {
   color: #86909c;
 }
 
-.content-wrapper {
-  height: calc(100vh - 140px);
+.page-body {
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  overflow: hidden;
+  padding: 0 24px 24px;
+  gap: 16px;
 }
 
-.main-row {
-  height: 100%;
+.role-sider {
+  background-color: #fff;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.content-area {
+  flex: 1;
+  background-color: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
 }
 
 .h-full {
@@ -552,13 +601,6 @@ const handleDelete = (role) => {
 }
 
 /* 列表样式 */
-.list-card {
-  border-radius: 8px;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  border: 1px solid var(--color-border);
-}
 
 .list-header {
   padding: 16px;
@@ -652,14 +694,20 @@ const handleDelete = (role) => {
   border-radius: 8px;
   display: flex;
   flex-direction: column;
+  height: 100%;
 }
 
 .detail-header {
-  padding: 20px;
+  padding: 24px 32px;
   border-bottom: 1px solid #f2f3f5;
+  background: linear-gradient(to bottom, #fcfcfd, #fff);
+}
+
+.detail-header-top {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
+  margin-bottom: 16px;
 }
 
 .detail-title-group {
@@ -669,66 +717,96 @@ const handleDelete = (role) => {
 }
 
 .role-icon-wrapper.large {
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
 }
 
 .detail-title {
   margin: 0;
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 600;
   color: #1d2129;
 }
 
 .detail-code {
-  margin: 2px 0 0;
-  font-size: 12px;
+  margin: 4px 0 0;
+  font-size: 13px;
   color: #86909c;
+  font-family: monospace;
+}
+
+.role-desc-box {
+  background-color: #f7f8fa;
+  padding: 12px 16px;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #4e5969;
+  line-height: 1.5;
 }
 
 .detail-content {
-  padding: 24px;
+  padding: 24px 32px;
   flex: 1;
   overflow-y: auto;
 }
 
-.detail-section {
-  margin-bottom: 24px;
-}
-
-.detail-section.bordered {
-  border: 1px solid #f2f3f5;
-  border-radius: 8px;
-  padding: 16px;
-}
-
-.section-label {
-  font-size: 14px;
-  color: #86909c;
-  margin-bottom: 8px;
-}
-
-.section-text {
-  font-size: 14px;
-  color: #1d2129;
-  line-height: 1.6;
-  margin: 0;
+.section-block {
+  margin-bottom: 32px;
 }
 
 .section-header {
   display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.section-title-group {
+  display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 12px;
 }
 
 .section-title-text {
-  font-weight: 500;
+  font-size: 16px;
+  font-weight: 600;
   color: #1d2129;
 }
 
-.permission-tags {
+.section-meta {
+  font-size: 12px;
+  color: #86909c;
+}
+
+/* 权限盒子 */
+.permission-box {
+  border: 1px solid #e5e6eb;
+  border-radius: 8px;
+  padding: 20px;
+  background-color: #fff;
+  min-height: 100px;
+}
+
+.permission-box.is-admin {
+  background: linear-gradient(135deg, #fff0f0 0%, #fff 100%);
+  border-color: #fecaca;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.admin-state {
+  text-align: center;
+  color: #f53f3f;
+}
+
+.perm-tags-wrapper {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
@@ -736,27 +814,86 @@ const handleDelete = (role) => {
 
 .perm-tag {
   border: none;
+  padding: 4px 10px;
+  font-size: 13px;
 }
 
-.data-perm-grid {
+.empty-perm {
+  color: #c9cdd4;
+  text-align: center;
+  padding: 20px;
+  font-size: 13px;
+}
+
+/* 数据权限卡片 */
+.data-perm-cards {
   display: grid;
   grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.perm-card {
+  border: 1px solid #e5e6eb;
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  align-items: flex-start;
   gap: 16px;
+  transition: all 0.2s;
+  position: relative;
+  overflow: hidden;
 }
 
-.perm-box {
-  padding: 12px;
-  border-radius: 6px;
+.perm-card:hover {
+  border-color: #c9cdd4;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
 }
 
-.perm-name {
-  font-weight: 500;
-  font-size: 14px;
+.card-icon-bg {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.card-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.card-label {
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.card-value {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1d2129;
   margin-bottom: 4px;
 }
 
-.perm-desc {
+.card-desc {
   font-size: 12px;
+  color: #86909c;
+  line-height: 1.4;
+}
+
+.card-status {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  opacity: 0.2;
+}
+
+.perm-card:hover .card-status {
+  opacity: 1;
 }
 
 /* 颜色类 */
@@ -766,16 +903,17 @@ const handleDelete = (role) => {
 .bg-cyan { background-color: #e8fffb; color: #0fc6c2; }
 .bg-green { background-color: #e8ffea; color: #00b42a; }
 .bg-amber { background-color: #fff7e8; color: #ff7d00; }
-.bg-indigo { background-color: #e8f3ff; color: #165dff; } /* Arco没有indigo，用blue代替或自定义 */
+.bg-indigo { background-color: #e8f3ff; color: #165dff; }
 
 .text-indigo { color: #165dff; }
 .text-blue { color: #165dff; }
 .text-green { color: #00b42a; }
-.text-blue-sub { color: #4080ff; }
-.text-green-sub { color: #27c346; }
 
 .bg-blue-light { background-color: #e8f3ff; }
 .bg-green-light { background-color: #e8ffea; }
+
+.flex-row-center { display: flex; align-items: center; }
+.ml-2 { margin-left: 8px; }
 
 /* 空状态 */
 .empty-state {
