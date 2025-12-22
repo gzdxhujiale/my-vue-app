@@ -1,50 +1,54 @@
 <script setup>
-import { CodeIcon } from 'lucide-vue-next'
+import { DownloadIcon } from 'lucide-vue-next'
 
-const tools = [
+// 动态配置：通过调整数组顺序即可排序，添加对象即可新增
+const toolsConfig = [
   {
     title: '窗口控制器',
-    desc: '一键管理桌面窗口布局，提升多任务处理效率。',
-    link: '/downloads/窗口控制器.exe'
+    desc: '一键管理桌面窗口，提升多任务处理效率。',
+    link: 'https://pan.quark.cn/s/7a89f42d2c70'
   },
   {
     title: 'ReadBook',
     desc: '沉浸式电子书阅读器，支持多种格式与笔记功能。',
-    link: '/downloads/readbook.exe'
+    link: 'https://pan.quark.cn/s/4c0eb46b3a5d'
   },
   {
     title: '智能直播助手',
     desc: 'AI 驱动的直播间场控与互动助手，自动回复弹幕。',
-    link: '#'
+    link: 'https://pan.quark.cn/s/79b9109992bc'
   },
   {
     title: 'MD Reader',
     desc: '轻量级 Markdown 阅读器，支持实时预览与大纲导航。',
-    link: '#'
+    link: 'https://pan.quark.cn/s/d8bf9a214aea'
   },
   {
     title: '智聘',
-    desc: '智能简历解析与人岗匹配工具，自动化招聘流程。',
-    link: '/downloads/智聘.exe'
+    desc: '暂无描述',
+    link: 'https://pan.quark.cn/s/e6a7c6fa2647'
   }
 ]
 </script>
 
 <template>
   <div class="page-container">
-    <div class="header">
-      <div class="icon-wrapper">
-        <CodeIcon :size="32" />
-      </div>
-      <h1>AI Coding 小工具</h1>
+    <div class="page-header">
+      <h2 class="page-title">AI Coding 工具箱</h2>
+      <p class="description">AI 辅助生成的实用小工具集合，提升开发与办公效率。</p>
     </div>
-    <div class="content">
-      <p class="description">AI Coding 生成的实用小工具集合。</p>
-      <div class="card-grid">
-        <div v-for="(tool, index) in tools" :key="index" class="card">
+    
+    <div class="card-grid">
+      <div v-for="(tool, index) in toolsConfig" :key="index" class="card">
+        <div class="card-content">
           <h3>{{ tool.title }}</h3>
           <p>{{ tool.desc }}</p>
-          <a :href="tool.link" class="download-btn" target="_blank">下载应用</a>
+        </div>
+        <div class="card-footer">
+          <a :href="tool.link" class="download-btn" target="_blank">
+            <DownloadIcon :size="16" />
+            <span>下载应用</span>
+          </a>
         </div>
       </div>
     </div>
@@ -53,85 +57,91 @@ const tools = [
 
 <style scoped>
 .page-container {
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
+  padding: 0 12px;
 }
 
-.header {
-  display: flex;
-  align-items: center;
-  gap: 16px;
+.page-header {
   margin-bottom: 32px;
 }
 
-.icon-wrapper {
-  width: 56px;
-  height: 56px;
-  background-color: #eff6ff;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #3b82f6;
-}
-
-h1 {
+.page-title {
   font-size: 24px;
-  font-weight: 700;
+  font-weight: 600;
   color: #0f172a;
-  margin: 0;
+  margin: 0 0 8px 0;
 }
 
 .description {
   color: #64748b;
-  margin-bottom: 24px;
+  font-size: 14px;
+  margin: 0;
 }
 
 .card-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 24px;
 }
 
 .card {
   background: white;
   padding: 24px;
-  border-radius: 12px;
-  border: 1px solid #e2e8f0;
-  transition: all 0.2s;
+  border-radius: 16px;
+  border: 1px solid #f1f5f9;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
 .card:hover {
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  border-color: #3b82f6;
+  transform: translateY(-4px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  border-color: #10b981;
+}
+
+.card-content {
+  flex: 1;
+  margin-bottom: 24px;
 }
 
 .card h3 {
   margin: 0 0 12px 0;
   font-size: 18px;
+  font-weight: 600;
   color: #0f172a;
 }
 
 .card p {
   margin: 0;
   color: #64748b;
-  line-height: 1.5;
+  line-height: 1.6;
+  font-size: 14px;
+}
+
+.card-footer {
+  margin-top: auto;
 }
 
 .download-btn {
-  display: inline-block;
-  margin-top: 16px;
-  padding: 8px 16px;
-  background-color: #3b82f6;
-  color: white;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background-color: #ecfdf5;
+  color: #10b981;
   text-decoration: none;
-  border-radius: 6px;
+  border-radius: 8px;
   font-size: 14px;
   font-weight: 500;
-  transition: background-color 0.2s;
+  transition: all 0.2s;
+  width: fit-content;
 }
 
 .download-btn:hover {
-  background-color: #2563eb;
+  background-color: #10b981;
+  color: white;
 }
 </style>

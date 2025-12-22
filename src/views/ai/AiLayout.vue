@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, provide, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import {
   BotIcon, CodeIcon, GitBranchIcon, HomeIcon, MenuIcon, ChevronLeftIcon, ChevronRightIcon
@@ -10,13 +10,24 @@ const route = useRoute()
 
 const collapsed = ref(false)
 
-const menuItems = [
+// 动态配置侧边栏导航
+const sidebarConfig = [
   { path: '/ai/agent', label: 'AI Agent', icon: BotIcon },
   { path: '/ai/coding', label: 'AI Coding 小工具', icon: CodeIcon },
   { path: '/ai/workflow', label: 'AI 工作流', icon: GitBranchIcon }
 ]
 
-const selectedKeys = computed(() => [route.path])
+// 面包屑扩展状态
+const breadcrumbExtra = ref([])
+const setBreadcrumbExtra = (items) => {
+  breadcrumbExtra.value = items
+}
+provide('setBreadcrumbExtra', setBreadcrumbExtra)
+
+// 监听路由变化，清空扩展面包屑（防止跨页面残留）
+watch(() => route.path, () => {
+  breadcrumbExtra.value = []
+})
 
 const handleMenuItemClick = (path) => {
   router.push(path)
@@ -44,7 +55,7 @@ const goHome = () => {
 
       <nav class="sidebar-menu">
         <div
-          v-for="item in menuItems"
+          v-for="item in sidebarConfig"
           :key="item.path"
           class="menu-item"
           :class="{ active: route.path === item.path }"
@@ -57,6 +68,10 @@ const goHome = () => {
       </nav>
 
       <div class="sidebar-footer">
+        <div class="menu-item footer-home" @click="goHome">
+          <HomeIcon class="menu-icon" :size="20" />
+          <span v-if="!collapsed" class="menu-label">返回首页</span>
+        </div>
         <button class="collapse-btn" @click="toggleCollapse">
           <component :is="collapsed ? ChevronRightIcon : ChevronLeftIcon" :size="20" />
         </button>
@@ -67,11 +82,28 @@ const goHome = () => {
     <main class="main-content">
       <header class="top-bar">
         <div class="breadcrumb">
-          <span class="breadcrumb-item" @click="goHome">首页</span>
-          <span class="separator">/</span>
           <span class="breadcrumb-item active">AI 工具</span>
           <span class="separator">/</span>
-          <span class="breadcrumb-item current">{{ menuItems.find(i => i.path === route.path)?.label }}</span>
+          
+          <!-- 如果有扩展面包屑，则当前模块名为链接，否则为文本 -->
+          <span 
+            v-if="breadcrumbExtra.length > 0"
+            class="breadcrumb-item link" 
+            @click="router.push(route.path)"
+          >
+            {{ sidebarConfig.find(i => i.path === route.path)?.label }}
+          </span>
+          <span 
+            v-else
+            class="breadcrumb-item current"
+          >
+            {{ sidebarConfig.find(i => i.path === route.path)?.label }}
+          </span>
+          
+          <template v-for="(item, index) in breadcrumbExtra" :key="index">
+            <span class="separator">/</span>
+            <span class="breadcrumb-item current">{{ item.label }}</span>
+          </template>
         </div>
       </header>
       <div class="content-wrapper">
@@ -189,7 +221,31 @@ const goHome = () => {
   padding: 16px;
   border-top: 1px solid #e2e8f0;
   display: flex;
-  justify-content: flex-end;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.footer-home {
+  flex: 1;
+  margin-right: 8px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  color: #64748b;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: all 0.2s;
+}
+
+.footer-home:hover {
+  background-color: #f1f5f9;
+  color: #0f172a;
+}
+
+.sidebar.collapsed .footer-home {
+  margin-right: 0;
+  justify-content: center;
+  padding: 8px;
 }
 
 .collapse-btn {
@@ -197,9 +253,12 @@ const goHome = () => {
   border: none;
   cursor: pointer;
   color: #94a3b8;
-  padding: 4px;
-  border-radius: 4px;
-  transition: color 0.2s;
+  padding: 8px;
+  border-radius: 6px;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .collapse-btn:hover {
@@ -208,7 +267,9 @@ const goHome = () => {
 }
 
 .sidebar.collapsed .sidebar-footer {
-  justify-content: center;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px 8px;
 }
 
 /* 主内容区样式 */
@@ -248,6 +309,16 @@ const goHome = () => {
   color: #64748b;
 }
 
+.breadcrumb-item.link {
+  cursor: pointer;
+  color: #64748b;
+  transition: color 0.2s;
+}
+
+.breadcrumb-item.link:hover {
+  color: #10b981;
+}
+
 .breadcrumb-item.current {
   cursor: default;
   color: #0f172a;
@@ -264,6 +335,8 @@ const goHome = () => {
   padding: 24px;
   overflow-y: auto;
 }
+
+
 
 /* 过渡动画 */
 .fade-enter-active,
