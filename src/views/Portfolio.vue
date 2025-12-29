@@ -50,7 +50,7 @@ const projects = [
     title: 'RPA+AI 智能客服助手',
     role: '策略中台产品经理', roleColor: 'blue',
     type: 'AI功能产品',
-    date: '2025.08 - 2025.11',
+    date: ' ',
     tags: ['RICE模型', 'AI Agent', '飞书多维表', '影刀RPA'],
     highlightColor: 'blue',
     highlights: [
@@ -68,7 +68,7 @@ const projects = [
     title: '财务数据中心与 BI 系统',
     role: '中台产品经理', roleColor: 'purple',
     type: '数据产品',
-    date: '2025.01 - 2025.07',
+    date: ' ',
     tags: ['数据仓库', '星型模型', 'ETL管道', 'BI看板'],
     highlightColor: 'purple',
     highlights: [
@@ -328,7 +328,7 @@ onMounted(() => {
 
     <!-- 底部 -->
     <footer class="footer">
-      <p>&copy; 2025 胡家乐 Portfolio. Designed with Data-Driven Thinking.</p>
+      <p>&copy; 2026 胡家乐 Portfolio. with Ai Coding.</p>
     </footer>
   </div>
 </template>
