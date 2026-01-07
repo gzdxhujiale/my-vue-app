@@ -11,6 +11,7 @@ import {
 const router = useRouter()
 const emailCopied = ref(false)
 const revealedElements = ref(new Set())
+const showPrototypeModal = ref(false)
 
 // 作品交付物（首页三卡）
 const deliverables = [
@@ -114,6 +115,11 @@ const navigateToDeliverable = (item) => {
     alert('维护中，暂时不可查看')
     return
   }
+  // 高保真原型图卡片特殊处理，弹出选择弹窗
+  if (item.title === '高保真原型图') {
+    showPrototypeModal.value = true
+    return
+  }
   if (item?.path) {
     if (item.path.startsWith('http')) {
       window.open(item.path, '_blank')
@@ -121,6 +127,15 @@ const navigateToDeliverable = (item) => {
       router.push(item.path)
     }
   }
+}
+
+const openPrototypeLink = (type) => {
+  if (type === 'arco') {
+    window.open('https://hujiale.works/#/finance/todo', '_blank')
+  } else if (type === 'optimized') {
+    window.open('https://gzdxhujiale.github.io/shadcn-finance/', '_blank')
+  }
+  // 不自动关闭弹窗，用户可以继续选择其他版本
 }
 
 const scrollToSection = (id) => {
@@ -330,6 +345,45 @@ onMounted(() => {
     <footer class="footer">
       <p>&copy; 2026 胡家乐 Portfolio. with Ai Coding.</p>
     </footer>
+
+    <!-- 高保真原型图选择弹窗 -->
+    <Teleport to="body">
+      <div v-if="showPrototypeModal" class="modal-overlay" @click.self="showPrototypeModal = false">
+        <div class="modal-container">
+          <div class="modal-header">
+            <h3>选择原型版本</h3>
+            <button class="modal-close" @click="showPrototypeModal = false">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+          </div>
+          <div class="modal-body">
+            <div class="modal-option" @click="openPrototypeLink('arco')">
+              <div class="option-icon arco-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"></path><path d="M2 17l10 5 10-5"></path><path d="M2 12l10 5 10-5"></path></svg>
+              </div>
+              <div class="option-content">
+                <span class="option-title">Arco Design 字节跳动版</span>
+                <span class="option-desc">现代、清爽、年轻化的视觉基调，企业级中后台设计系统。已停止更新</span>
+              </div>
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="option-arrow"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+            </div>
+            <div class="modal-option optimized" @click="openPrototypeLink('optimized')">
+              <div class="option-icon optimized-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+              </div>
+              <div class="option-content">
+                <span class="option-title">
+                  深度优化版
+                  <span class="recommend-badge">推荐</span>
+                </span>
+                <span class="option-desc">更统一的现代化视觉风格与用户交互，深度优化版本。持续更新中</span>
+              </div>
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="option-arrow"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -897,5 +951,153 @@ onMounted(() => {
     transform: translateY(0);
     filter: blur(0);
   }
+}
+
+/* 原型选择弹窗 */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease-out;
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.modal-container {
+  background: white;
+  border-radius: 1rem;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  width: 90%;
+  max-width: 420px;
+  animation: slideUp 0.3s ease-out;
+  overflow: hidden;
+}
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px) scale(0.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+.modal-header h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #0f172a;
+  margin: 0;
+}
+.modal-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 0.5rem;
+  border: none;
+  background: transparent;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.modal-close:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+.modal-body {
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.modal-option {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  border-radius: 0.75rem;
+  border: 1px solid #e2e8f0;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: #fafbfc;
+}
+.modal-option:hover {
+  border-color: #3b82f6;
+  background: #eff6ff;
+  transform: translateX(4px);
+}
+.modal-option.optimized {
+  border-color: #c7d2fe;
+  background: linear-gradient(135deg, #eef2ff 0%, #f5f3ff 100%);
+}
+.modal-option.optimized:hover {
+  border-color: #818cf8;
+  background: linear-gradient(135deg, #e0e7ff 0%, #ede9fe 100%);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15);
+}
+.option-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.arco-icon {
+  background: #dbeafe;
+  color: #2563eb;
+}
+.optimized-icon {
+  background: linear-gradient(135deg, #c7d2fe 0%, #ddd6fe 100%);
+  color: #6366f1;
+}
+.option-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+.option-title {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #1e293b;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.option-desc {
+  font-size: 0.75rem;
+  color: #64748b;
+}
+.recommend-badge {
+  font-size: 0.625rem;
+  font-weight: 700;
+  padding: 0.125rem 0.5rem;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  color: white;
+  border-radius: 9999px;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+.option-arrow {
+  color: #94a3b8;
+  flex-shrink: 0;
+  transition: transform 0.2s;
+}
+.modal-option:hover .option-arrow {
+  color: #3b82f6;
+  transform: translateX(4px);
+}
+.modal-option.optimized:hover .option-arrow {
+  color: #6366f1;
 }
 </style>
